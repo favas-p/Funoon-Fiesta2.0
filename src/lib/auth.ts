@@ -3,8 +3,9 @@ import { ADMIN_COOKIE, ADMIN_CREDENTIALS, JURY_COOKIE } from "./config";
 import { getJuries as loadJuries } from "./data";
 import type { Jury } from "./types";
 
-export function isAdminAuthenticated(): boolean {
-  const token = cookies().get(ADMIN_COOKIE)?.value;
+export async function isAdminAuthenticated(): Promise<boolean> {
+  const store = await cookies();
+  const token = store.get(ADMIN_COOKIE)?.value;
   return token === ADMIN_CREDENTIALS.username;
 }
 
@@ -20,7 +21,8 @@ export async function findJury(
 }
 
 export async function getCurrentJury() {
-  const token = cookies().get(JURY_COOKIE)?.value;
+  const store = await cookies();
+  const token = store.get(JURY_COOKIE)?.value;
   if (!token) return undefined;
   const [, juryId] = token.split(":");
   if (!juryId) return undefined;

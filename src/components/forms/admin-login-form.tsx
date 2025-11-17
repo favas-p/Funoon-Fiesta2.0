@@ -1,8 +1,8 @@
 "use client";
 
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useFormState } from "react-dom";
 
 interface AdminLoginFormProps {
   action: (
@@ -14,7 +14,7 @@ interface AdminLoginFormProps {
 const initialState = { error: undefined as string | undefined };
 
 export function AdminLoginForm({ action }: AdminLoginFormProps) {
-  const [state, formAction] = useFormState(action, initialState);
+  const [state, formAction] = useActionState(action, initialState);
 
   return (
     <form

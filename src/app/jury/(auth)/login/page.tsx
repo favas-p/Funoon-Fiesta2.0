@@ -18,7 +18,8 @@ async function juryLoginAction(
     return { error: "Invalid jury credentials." };
   }
 
-  (await cookies()).set(JURY_COOKIE, `jury:${jury.id}`, {
+  const store = await cookies();
+  store.set(JURY_COOKIE, `jury:${jury.id}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: true,

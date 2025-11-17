@@ -17,7 +17,8 @@ const adminNav = [
 
 async function logoutAction() {
   "use server";
-  cookies().delete(ADMIN_COOKIE);
+  const store = await cookies();
+  store.delete(ADMIN_COOKIE);
   redirect("/admin/login");
 }
 

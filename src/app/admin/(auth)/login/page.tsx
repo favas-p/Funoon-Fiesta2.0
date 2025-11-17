@@ -20,7 +20,8 @@ async function loginAdminAction(
     return { error: "Invalid admin credentials." };
   }
 
-  (await cookies()).set(ADMIN_COOKIE, ADMIN_CREDENTIALS.username, {
+  const store = await cookies();
+  store.set(ADMIN_COOKIE, ADMIN_CREDENTIALS.username, {
     httpOnly: true,
     sameSite: "lax",
     secure: true,

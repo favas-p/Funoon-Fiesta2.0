@@ -18,9 +18,9 @@ const jurySchema = z.object({
 
 async function upsertJury(formData: FormData, mode: "create" | "update") {
   const parsed = jurySchema.safeParse({
-    id: formData.get("id"),
-    name: formData.get("name"),
-    password: formData.get("password"),
+    id: formData.get("id") ?? undefined,
+    name: String(formData.get("name") ?? "").trim(),
+    password: String(formData.get("password") ?? "").trim(),
   });
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((issue) => issue.message).join(", "));

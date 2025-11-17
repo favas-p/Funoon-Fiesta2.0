@@ -8,7 +8,8 @@ import { JURY_COOKIE } from "@/lib/config";
 
 async function logoutAction() {
   "use server";
-  cookies().delete(JURY_COOKIE);
+  const store = await cookies();
+  store.delete(JURY_COOKIE);
   redirect("/jury/login");
 }
 
