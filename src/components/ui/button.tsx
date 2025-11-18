@@ -1,52 +1,84 @@
 "use client";
 
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+
 import { cn } from "@/lib/utils";
-import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 text-white shadow-lg shadow-rose-500/30 hover:scale-[1.01]",
+        primary:
+          "bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 text-white shadow-lg shadow-rose-500/30 hover:scale-[1.01]",
+        secondary:
+          "bg-white/10 text-white border border-white/20 backdrop-blur hover:bg-white/20",
+        ghost:
+          "text-white border border-transparent hover:border-white/30 hover:bg-white/5",
+        outline:
+          "border border-white/30 bg-transparent text-white hover:bg-white/10",
+        destructive:
+          "bg-red-600 text-white hover:bg-red-600/90 focus-visible:ring-red-400/40",
+        danger: "bg-red-500/90 text-white hover:bg-red-500",
+        link: "text-fuchsia-300 underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-11 px-4 py-2",
+        sm: "h-9 rounded-lg px-3",
+        lg: "h-12 rounded-2xl px-6",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
 
-interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    PropsWithChildren {
-  variant?: Variant;
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
   fullWidth?: boolean;
   loading?: boolean;
 }
 
-const baseClass =
-  "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      fullWidth,
+      loading,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(
+          buttonVariants({ variant, size, className }),
+          fullWidth && "w-full",
+        )}
+        ref={ref}
+        disabled={loading || props.disabled}
+        {...props}
+      >
+        {loading ? "Processing..." : children}
+      </Comp>
+    );
+  },
+);
+Button.displayName = "Button";
 
-const variantClass: Record<Variant, string> = {
-  primary:
-    "bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 text-white shadow-lg shadow-rose-500/30 hover:scale-[1.01]",
-  secondary:
-    "bg-white/10 text-white border border-white/20 backdrop-blur hover:bg-white/20",
-  ghost:
-    "text-white border border-transparent hover:border-white/30 hover:bg-white/5",
-  danger: "bg-red-500/90 text-white hover:bg-red-500",
-};
-
-export function Button({
-  children,
-  className,
-  variant = "primary",
-  fullWidth,
-  loading,
-  ...props
-}: ButtonProps) {
-  return (
-    <button
-      className={cn(
-        baseClass,
-        variantClass[variant],
-        fullWidth && "w-full",
-        className,
-      )}
-      disabled={loading || props.disabled}
-      {...props}
-    >
-      {loading ? "Processing..." : children}
-    </button>
-  );
-}
+export { Button, buttonVariants };
 

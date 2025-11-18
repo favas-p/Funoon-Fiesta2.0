@@ -155,12 +155,39 @@ export function TeamLeadersShowcase({ teams }: TeamLeadersShowcaseProps) {
                           </motion.div>
                         ))}
                       </div>
+                      <div className="space-y-3">
+                        {leaders.map((leader, leaderIndex) => (
+                          <motion.div
+                            key={leaderIndex}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: leaderIndex * 0.1 }}
+                            className="flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/item"
+                          >
+                            <div
+                              className="relative w-14 h-14 rounded-full overflow-hidden border-2 flex-shrink-0 ring-2 ring-transparent group-hover/item:ring-yellow-400/50 transition-all"
+                              style={{ borderColor: colors.primary }}
+                            >
+                              <Image
+                                src={`${team.leader_photo}?auto=format&fit=facearea&facepad=2&w=120&h=120&seed=${leaderIndex}`}
+                                alt={leader}
+                                fill
+                                className="object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-white truncate">{leader}</p>
+                              <p className="text-xs text-white/60">
+                                {leaders.length > 1 ? "Co-Leader" : "Team Leader"}
+                              </p>
+                            </div>
+                            <Crown className="w-5 h-5 text-yellow-400/70 group-hover/item:text-yellow-400 flex-shrink-0 transition-colors" />
+                          </motion.div>
+                        ))}
+                      </div>
                     </div>
-
-                    {/* Team Description */}
-                    <div className="mt-6 pt-6 border-t border-white/10">
-                      <p className="text-sm text-white/70 line-clamp-2">{team.description}</p>
-                    </div>
+                    
                   </div>
                 </div>
               </motion.div>

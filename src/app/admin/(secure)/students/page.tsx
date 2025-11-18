@@ -27,10 +27,10 @@ const csvStudentSchema = z.object({
 
 async function upsertStudent(formData: FormData, mode: "create" | "update") {
   const parsed = studentSchema.safeParse({
-    id: formData.get("id"),
-    name: formData.get("name"),
-    team_id: formData.get("team_id"),
-    chest_no: formData.get("chest_no"),
+    id: String(formData.get("id") ?? "").trim() || undefined,
+    name: String(formData.get("name") ?? "").trim(),
+    team_id: String(formData.get("team_id") ?? "").trim(),
+    chest_no: String(formData.get("chest_no") ?? "").trim(),
   });
   if (!parsed.success) {
     throw new Error(parsed.error.issues.map((issue) => issue.message).join(", "));

@@ -49,3 +49,18 @@ export function CardDescription({
   );
 }
 
+export function CardContent({
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & PropsWithChildren) {
+  return (
+    <div
+      className={cn("p-0 pt-4", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
