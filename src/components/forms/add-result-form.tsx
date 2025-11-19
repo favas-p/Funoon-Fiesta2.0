@@ -7,13 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { SearchSelect } from "@/components/ui/search-select";
 import { Select } from "@/components/ui/select";
-import type { GradeType, Jury, Program, Student, Team } from "@/lib/types";
+import type {
+  GradeType,
+  Jury,
+  Program,
+  ProgramRegistration,
+  Student,
+  Team,
+} from "@/lib/types";
 
 interface AddResultFormProps {
   programs: Program[];
   students: Student[];
   teams: Team[];
   juries: Jury[];
+  registrations?: ProgramRegistration[];
   action: (formData: FormData) => Promise<void>;
   lockProgram?: boolean;
   initial?: Partial<
@@ -42,6 +50,7 @@ export function AddResultForm({
   students,
   teams,
   juries,
+  registrations,
   action,
   lockProgram = false,
   initial,
@@ -88,10 +97,47 @@ export function AddResultForm({
     [teams],
   );
 
+  const registrationMap = useMemo(() => {
+    const map = new Map<string, ProgramRegistration[]>();
+    (registrations ?? []).forEach((registration) => {
+      const list = map.get(registration.programId) ?? [];
+      list.push(registration);
+      map.set(registration.programId, list);
+    });
+    return map;
+  }, [registrations]);
+
   const isSingle = selectedProgram?.section === "single";
   const isJuryMode = mode === "jury";
   const activeJury = juries[0];
-  const placementSelectOptions = isSingle ? studentOptions : teamOptions;
+  const programRegistrations = selectedProgram
+    ? registrationMap.get(selectedProgram.id) ?? []
+    : [];
+
+  const singleCandidateOptions = programRegistrations.map((registration) => ({
+    value: registration.studentId,
+    label: `${registration.studentName} · ${registration.studentChest}`,
+    meta: registration.teamName,
+  }));
+
+  const teamCandidateOptions = Array.from(
+    new Map(
+      programRegistrations.map((registration) => [
+        registration.teamId,
+        { value: registration.teamId, label: registration.teamName, meta: registration.programName },
+      ]),
+    ).values(),
+  );
+
+  const registrationDriven = (registrations?.length ?? 0) > 0;
+  const placementSelectOptions = registrationDriven
+    ? isSingle
+      ? singleCandidateOptions
+      : teamCandidateOptions
+    : isSingle
+      ? studentOptions
+      : teamOptions;
+  const hasEligibleCandidates = placementSelectOptions.length > 0;
   const showProgramSelector = !(isJuryMode && lockProgram);
 
   return (
@@ -162,8 +208,15 @@ export function AddResultForm({
             </p>
           </div>
         )}
+        {registrationDriven && !hasEligibleCandidates && (
+          <p className="mt-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            No registered candidates for this program yet.
+          </p>
+        )}
         <div className="mt-6 grid gap-5">
-          {[1, 2, 3].map((position) => (
+          {[1, 2, 3].map((position) => {
+            const slot = position as 1 | 2 | 3;
+            return (
             <div
               key={position}
               className="rounded-2xl border border-white/10 bg-white/5 p-4"
@@ -180,18 +233,21 @@ export function AddResultForm({
                   name={`winner_${position}`}
                   required
                   defaultValue={
-                    initial?.[position]?.winnerId ??
-                    placementSelectOptions[0]?.value
+                    initial?.[slot]?.winnerId ??
+                    placementSelectOptions[0]?.value ??
+                    ""
                   }
                   options={placementSelectOptions}
                   placeholder={`Search ${isSingle ? "student" : "team"}...`}
+                  disabled={!hasEligibleCandidates}
                 />
               </div>
               {isSingle ? (
                 <Select
                   className="mt-3"
                   name={`grade_${position}`}
-                  defaultValue={initial?.[position]?.grade ?? "A"}
+                  defaultValue={initial?.[slot]?.grade ?? "A"}
+                  disabled={!hasEligibleCandidates}
                 >
                   {gradeOptions.map((grade) => (
                     <option key={grade.value} value={grade.value}>
@@ -203,7 +259,8 @@ export function AddResultForm({
                 <input type="hidden" name={`grade_${position}`} value="none" />
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
         {isJuryMode && !showProgramSelector && (
           <div className="mt-6 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
@@ -212,7 +269,7 @@ export function AddResultForm({
             <p className="text-xs text-white/50">
               Double-check placements before submitting — edits aren’t possible afterward.
             </p>
-            <Button type="submit" className="mt-2 w-full">
+            <Button type="submit" className="mt-2 w-full" disabled={!hasEligibleCandidates}>
               Submit evaluation
             </Button>
           </div>
@@ -239,7 +296,7 @@ export function AddResultForm({
               </option>
             ))}
           </Select>
-          <Button type="submit" className="mt-4">
+          <Button type="submit" className="mt-4" disabled={!hasEligibleCandidates}>
             {submitLabel}
           </Button>
         </Card>

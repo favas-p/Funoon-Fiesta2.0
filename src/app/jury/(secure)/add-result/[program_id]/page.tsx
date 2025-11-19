@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { AddResultForm } from "@/components/forms/add-result-form";
 import { getCurrentJury } from "@/lib/auth";
 import { getAssignments, getPrograms, getStudents, getTeams } from "@/lib/data";
+import { getProgramRegistrations } from "@/lib/team-data";
+import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { submitResultToPending } from "@/lib/result-service";
 
 interface JuryAddResultPageProps {
@@ -33,6 +35,8 @@ async function jurySubmitResultAction(formData: FormData) {
     };
   });
 
+  await ensureRegisteredCandidates(programId, winners.map((winner) => winner.id));
+
   await submitResultToPending({
     programId,
     juryId: jury.id,
@@ -50,11 +54,12 @@ export default async function JuryAddResultPage({
   if (!jury) {
     redirect("/jury/login");
   }
-  const [programs, students, teams, assignments] = await Promise.all([
+  const [programs, students, teams, assignments, registrations] = await Promise.all([
     getPrograms(),
     getStudents(),
     getTeams(),
     getAssignments(),
+    getProgramRegistrations(),
   ]);
 
   const program = programs.find((item) => item.id === programId);
@@ -74,6 +79,7 @@ export default async function JuryAddResultPage({
         students={students}
         teams={teams}
         juries={[jury]}
+        registrations={registrations}
         lockProgram
         action={jurySubmitResultAction}
         mode="jury"

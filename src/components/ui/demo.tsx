@@ -41,6 +41,7 @@ const ICONS = {
   programs: Layers,
   students: GraduationCap,
   jury: Users,
+  teams: Users,
   assignments: ClipboardCheck,
   addResult: PenSquare,
   pending: Hourglass,

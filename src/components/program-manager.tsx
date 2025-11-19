@@ -16,6 +16,7 @@ interface ProgramManagerProps {
   bulkDeleteAction: (formData: FormData) => Promise<void>;
   bulkAssignAction: (formData: FormData) => Promise<void>;
   juries: Jury[];
+  candidateCounts?: Record<string, number>;
 }
 
 type SortOption = "latest" | "az" | "category";
@@ -54,6 +55,7 @@ export function ProgramManager({
   bulkDeleteAction,
   bulkAssignAction,
   juries,
+  candidateCounts = {},
 }: ProgramManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
@@ -287,6 +289,8 @@ export function ProgramManager({
         {visiblePrograms.map((program) => {
           const isSelected = selected.has(program.id);
           const isEditing = editingId === program.id;
+          const candidateLimit = program.candidateLimit ?? 1;
+          const registrationCount = candidateCounts?.[program.id] ?? 0;
           return (
             <div
               key={program.id}
@@ -314,6 +318,15 @@ export function ProgramManager({
                   </span>
                   <span className="rounded-full border border-white/15 px-3 py-1">
                     {program.stage ? "On stage" : "Off stage"}
+                  </span>
+                  <span
+                    className={`rounded-full border px-3 py-1 ${
+                      registrationCount >= candidateLimit
+                        ? "border-amber-400 text-amber-200"
+                        : "border-emerald-400/40 text-emerald-200"
+                    }`}
+                  >
+                    Registered {registrationCount} / {candidateLimit}
                   </span>
                 </div>
                 <div className="text-sm text-white/70 w-full xl:w-auto">
@@ -371,6 +384,13 @@ export function ProgramManager({
                     <option value="true">On Stage</option>
                     <option value="false">Off Stage</option>
                   </Select>
+                  <Input
+                    name="candidateLimit"
+                    type="number"
+                    min={1}
+                    defaultValue={candidateLimit}
+                    placeholder="Candidate limit"
+                  />
                   <div className="flex items-center gap-3 md:col-span-2">
                     <Button type="submit" className="flex-1">
                       Save changes
@@ -455,6 +475,10 @@ export function ProgramManager({
             <p>
               <span className="text-white/50">Stage:</span>{" "}
               {viewProgram.stage ? "On stage" : "Off stage"}
+            </p>
+            <p>
+              <span className="text-white/50">Candidate limit:</span>{" "}
+              {viewProgram.candidateLimit ?? 1}
             </p>
           </div>
         )}

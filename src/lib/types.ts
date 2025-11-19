@@ -11,6 +11,7 @@ export interface Team {
   description: string;
   contact: string;
   total_points: number;
+  portal_password?: string;
 }
 
 export interface Student {
@@ -28,6 +29,7 @@ export interface Program {
   section: SectionType;
   stage: boolean;
   category: CategoryType;
+  candidateLimit?: number;
 }
 
 export interface Jury {
@@ -65,5 +67,39 @@ export interface ResultRecord {
 export interface LiveScore {
   team_id: string;
   total_points: number;
+}
+
+export interface PortalTeam {
+  id: string;
+  teamName: string;
+  password: string;
+  leaderName: string;
+  themeColor?: string;
+}
+
+export interface PortalStudent {
+  id: string;
+  name: string;
+  chestNumber: string;
+  teamId: string;
+  teamName: string;
+  score: number;
+}
+
+export interface RegistrationSchedule {
+  startDateTime: string;
+  endDateTime: string;
+}
+
+export interface ProgramRegistration {
+  id: string;
+  programId: string;
+  programName: string;
+  studentId: string;
+  studentName: string;
+  studentChest: string;
+  teamId: string;
+  teamName: string;
+  timestamp: string;
 }
 

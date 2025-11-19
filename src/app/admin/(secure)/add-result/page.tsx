@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AddResultForm } from "@/components/forms/add-result-form";
 import { getJuries, getPrograms, getStudents, getTeams } from "@/lib/data";
+import { getProgramRegistrations } from "@/lib/team-data";
+import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { submitResultToPending } from "@/lib/result-service";
 
 async function submitResultAction(formData: FormData) {
@@ -27,6 +29,8 @@ async function submitResultAction(formData: FormData) {
     };
   });
 
+  await ensureRegisteredCandidates(programId, winners.map((winner) => winner.id));
+
   await submitResultToPending({
     programId,
     juryId,
@@ -37,11 +41,12 @@ async function submitResultAction(formData: FormData) {
 }
 
 export default async function AddResultPage() {
-  const [programs, students, teams, juries] = await Promise.all([
+  const [programs, students, teams, juries, registrations] = await Promise.all([
     getPrograms(),
     getStudents(),
     getTeams(),
     getJuries(),
+    getProgramRegistrations(),
   ]);
 
   return (
@@ -52,6 +57,7 @@ export default async function AddResultPage() {
         students={students}
         teams={teams}
         juries={juries}
+        registrations={registrations}
         action={submitResultAction}
       />
     </div>

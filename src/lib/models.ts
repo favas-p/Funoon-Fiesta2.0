@@ -4,6 +4,8 @@ import type {
   Jury,
   LiveScore,
   Program,
+  ProgramRegistration,
+  RegistrationSchedule,
   ResultRecord,
   Student,
   Team,
@@ -19,6 +21,7 @@ const TeamSchema = new Schema<Team>(
     description: { type: String, required: true },
     contact: { type: String, required: true },
     total_points: { type: Number, default: 0 },
+    portal_password: { type: String, default: "" },
   },
   { timestamps: true },
 );
@@ -42,6 +45,7 @@ const ProgramSchema = new Schema<Program>(
     section: { type: String, enum: ["single", "group", "general"], required: true },
     stage: { type: Boolean, default: true },
     category: { type: String, enum: ["A", "B", "C", "none"], default: "none" },
+    candidateLimit: { type: Number, default: 1 },
   },
   { timestamps: true },
 );
@@ -69,6 +73,30 @@ const AssignedProgramSchema = new Schema<AssignedProgram>(
   { timestamps: true },
 );
 AssignedProgramSchema.index({ program_id: 1, jury_id: 1 }, { unique: true });
+
+const ProgramRegistrationSchema = new Schema<ProgramRegistration>(
+  {
+    id: { type: String, required: true, unique: true },
+    programId: { type: String, required: true },
+    programName: { type: String, required: true },
+    studentId: { type: String, required: true },
+    studentName: { type: String, required: true },
+    studentChest: { type: String, required: true },
+    teamId: { type: String, required: true },
+    teamName: { type: String, required: true },
+    timestamp: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+
+const RegistrationScheduleSchema = new Schema<RegistrationSchedule & { key: string }>(
+  {
+    key: { type: String, required: true, unique: true },
+    startDateTime: { type: String, required: true },
+    endDateTime: { type: String, required: true },
+  },
+  { timestamps: true },
+);
 
 const resultEntrySchema = new Schema(
   {
@@ -122,4 +150,13 @@ export const ApprovedResultModel =
   model<ResultRecord>("ApprovedResult", ResultSchema, "results_approved");
 export const LiveScoreModel =
   (models.LiveScore as Model<LiveScore>) ?? model<LiveScore>("LiveScore", LiveScoreSchema);
+export const ProgramRegistrationModel =
+  (models.ProgramRegistration as Model<ProgramRegistration>) ??
+  model<ProgramRegistration>("ProgramRegistration", ProgramRegistrationSchema);
+export const RegistrationScheduleModel =
+  (models.RegistrationSchedule as Model<RegistrationSchedule & { key: string }>) ??
+  model<RegistrationSchedule & { key: string }>(
+    "RegistrationSchedule",
+    RegistrationScheduleSchema,
+  );
 

@@ -49,6 +49,11 @@ export default async function HomePage() {
             <Link href="/scoreboard">
               <Button variant="secondary">Scoreboards</Button>
             </Link>
+            <Link href="/team/login">
+              <Button variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                Team Portal
+              </Button>
+            </Link>
           </div>
         </div>
         {highlight && (
@@ -140,6 +145,9 @@ export default async function HomePage() {
           </Link>
           <Link href="/jury/login">
             <Button variant="ghost">Jury Login</Button>
+          </Link>
+          <Link href="/team/login">
+            <Button>Team Portal</Button>
           </Link>
         </div>
       </section>

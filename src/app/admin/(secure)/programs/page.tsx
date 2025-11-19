@@ -12,6 +12,7 @@ import {
   getPrograms,
   updateProgramById,
 } from "@/lib/data";
+import { getProgramRegistrations, removeRegistrationsByProgram } from "@/lib/team-data";
 import { ProgramManager } from "@/components/program-manager";
 
 const programSchema = z.object({
@@ -20,6 +21,7 @@ const programSchema = z.object({
   section: z.enum(["single", "group", "general"]),
   stage: z.enum(["true", "false"]),
   category: z.enum(["A", "B", "C", "none"]),
+  candidateLimit: z.coerce.number().min(1).max(10).default(1),
 });
 
 const csvRowSchema = z.object({
@@ -46,6 +48,7 @@ async function mutateProgram(
     section: formData.get("section"),
     stage: formData.get("stage"),
     category: formData.get("category"),
+    candidateLimit: formData.get("candidateLimit") ?? formData.get("candidate_limit"),
   });
 
   if (!parsed.success) {
@@ -53,21 +56,25 @@ async function mutateProgram(
   }
 
   const payload = parsed.data;
+  const stage = payload.stage === "true";
+  const candidateLimit = payload.candidateLimit ?? 1;
 
   if (mode === "create") {
     await createProgram({
       name: payload.name,
       section: payload.section,
-      stage: payload.stage === "true",
+      stage,
       category: payload.category,
+      candidateLimit,
     });
   } else {
     if (!payload.id) throw new Error("Program ID required");
     await updateProgramById(payload.id, {
       name: payload.name,
       section: payload.section,
-      stage: payload.stage === "true",
+      stage,
       category: payload.category,
+      candidateLimit,
     });
   }
 
@@ -78,6 +85,7 @@ async function deleteProgramAction(formData: FormData) {
   "use server";
   const id = String(formData.get("id") ?? "");
   await deleteProgramById(id);
+  await removeRegistrationsByProgram(id);
   revalidatePath("/admin/programs");
 }
 
@@ -93,6 +101,7 @@ async function bulkDeleteProgramsAction(formData: FormData) {
   }
   for (const programId of programIds) {
     await deleteProgramById(programId);
+    await removeRegistrationsByProgram(programId);
   }
   revalidatePath("/admin/programs");
 }
@@ -191,13 +200,27 @@ async function importProgramsAction(formData: FormData) {
       section: parsed.data.section,
       stage: parsed.data.stage,
       category: parsed.data.category,
+      candidateLimit: 1,
     });
   }
   revalidatePath("/admin/programs");
 }
 
 export default async function ProgramsPage() {
-  const [programs, juries] = await Promise.all([getPrograms(), getJuries()]);
+  const [programs, juries, registrations] = await Promise.all([
+    getPrograms(),
+    getJuries(),
+    getProgramRegistrations(),
+  ]);
+
+  const programsWithLimits = programs.map((program) => ({
+    ...program,
+    candidateLimit: program.candidateLimit ?? 1,
+  }));
+  const registrationCounts = registrations.reduce<Record<string, number>>((acc, registration) => {
+    acc[registration.programId] = (acc[registration.programId] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="space-y-10">
@@ -227,6 +250,14 @@ export default async function ProgramsPage() {
             <option value="true">On Stage</option>
             <option value="false">Off Stage</option>
           </Select>
+          <Input
+            name="candidateLimit"
+            type="number"
+            min={1}
+            defaultValue={1}
+            placeholder="Candidate limit"
+            required
+          />
           <Button type="submit" className="md:col-span-2">
             Save Program
           </Button>
@@ -259,12 +290,13 @@ export default async function ProgramsPage() {
       </div>
 
       <ProgramManager
-        programs={programs}
+        programs={programsWithLimits}
         updateAction={updateProgramAction}
         deleteAction={deleteProgramAction}
         bulkDeleteAction={bulkDeleteProgramsAction}
         bulkAssignAction={bulkAssignProgramsAction}
         juries={juries}
+        candidateCounts={registrationCounts}
       />
     </div>
   );

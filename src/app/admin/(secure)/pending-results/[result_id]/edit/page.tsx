@@ -7,7 +7,9 @@ import {
   getStudents,
   getTeams,
 } from "@/lib/data";
+import { getProgramRegistrations } from "@/lib/team-data";
 import type { GradeType } from "@/lib/types";
+import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { updatePendingResultEntries } from "@/lib/result-service";
 
 interface EditPendingResultPageProps {
@@ -44,11 +46,12 @@ export default async function EditPendingResultPage({
     redirect("/admin/pending-results");
   }
 
-  const [programs, students, teams, juries] = await Promise.all([
+  const [programs, students, teams, juries, registrations] = await Promise.all([
     getPrograms(),
     getStudents(),
     getTeams(),
     getJuries(),
+    getProgramRegistrations(),
   ]);
   const program = programs.find((item) => item.id === result.program_id);
   const jury = juries.find((item) => item.id === result.jury_id);
@@ -72,6 +75,7 @@ export default async function EditPendingResultPage({
         grade,
       };
     });
+    await ensureRegisteredCandidates(program.id, winners.map((winner) => winner.id));
     await updatePendingResultEntries(result_id, winners);
     redirect("/admin/pending-results");
   }
@@ -86,6 +90,7 @@ export default async function EditPendingResultPage({
         students={students}
         teams={teams}
         juries={[jury]}
+        registrations={registrations}
         action={updatePendingAction}
         lockProgram
         initial={initial}

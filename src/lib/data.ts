@@ -184,9 +184,10 @@ export async function getApprovedResultById(
   return result ? JSON.parse(JSON.stringify(result)) : null;
 }
 
-export async function createProgram(input: Omit<Program, "id">): Promise<void> {
+export async function createProgram(input: Omit<Program, "id">): Promise<Program> {
   await connectDB();
-  await ProgramModel.create({ ...input, id: randomUUID() });
+  const created = await ProgramModel.create({ ...input, id: randomUUID() });
+  return JSON.parse(JSON.stringify(created)) as Program;
 }
 
 export async function updateProgramById(
@@ -372,6 +373,7 @@ const defaultTeams: Team[] = [
     description: "Fine arts and installations with a cosmic narrative.",
     contact: "cosmos@artsfest.edu",
     total_points: 0,
+    portal_password: "cosmos@123",
   },
   {
     id: "team-dynamo",
@@ -382,6 +384,7 @@ const defaultTeams: Team[] = [
     description: "Theatre and stagecraft enthusiasts.",
     contact: "dynamo@artsfest.edu",
     total_points: 0,
+    portal_password: "dynamo@123",
   },
   {
     id: "team-blaze",
@@ -392,6 +395,7 @@ const defaultTeams: Team[] = [
     description: "Dance collective known for explosive choreography.",
     contact: "blaze@artsfest.edu",
     total_points: 0,
+    portal_password: "blaze@123",
   },
   {
     id: "team-ember",
@@ -402,6 +406,7 @@ const defaultTeams: Team[] = [
     description: "Literary arts champions with spoken word mastery.",
     contact: "ember@artsfest.edu",
     total_points: 0,
+    portal_password: "ember@123",
   },
   {
     id: "team-aurora",
@@ -412,6 +417,7 @@ const defaultTeams: Team[] = [
     description: "Music & rhythm powerhouse representing the senior batch.",
     contact: "aurora@artsfest.edu",
     total_points: 0,
+    portal_password: "aurora@123",
   },
   {
     id: "team-flux",
@@ -422,6 +428,7 @@ const defaultTeams: Team[] = [
     description: "Media & film crew pushing experimental visuals.",
     contact: "flux@artsfest.edu",
     total_points: 0,
+    portal_password: "flux@123",
   },
 ];
 
@@ -491,6 +498,7 @@ const defaultPrograms: Program[] = [
     section: "single",
     stage: true,
     category: "A",
+    candidateLimit: 2,
   },
   {
     id: "prog-duet-dance",
@@ -498,6 +506,7 @@ const defaultPrograms: Program[] = [
     section: "group",
     stage: true,
     category: "none",
+    candidateLimit: 3,
   },
   {
     id: "prog-live-paint",
@@ -505,6 +514,7 @@ const defaultPrograms: Program[] = [
     section: "single",
     stage: false,
     category: "B",
+    candidateLimit: 1,
   },
   {
     id: "prog-shortfilm",
@@ -512,6 +522,7 @@ const defaultPrograms: Program[] = [
     section: "group",
     stage: false,
     category: "none",
+    candidateLimit: 4,
   },
   {
     id: "prog-quiz",
@@ -519,6 +530,7 @@ const defaultPrograms: Program[] = [
     section: "general",
     stage: true,
     category: "none",
+    candidateLimit: 5,
   },
 ];
 
