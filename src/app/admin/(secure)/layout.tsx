@@ -15,7 +15,16 @@ const adminNav: SidebarItem[] = [
   { href: "/admin/add-result", label: "Add Result", icon: "addResult" },
   { href: "/admin/pending-results", label: "Pending Results", icon: "pending" },
   { href: "/admin/approved-results", label: "Approved Results", icon: "approved" },
-  { href: "/admin/team-portal-control", label: "Team Portal", icon: "teams" },
+  {
+    href: "/admin/team-portal-control",
+    label: "Team Portal",
+    icon: "teams",
+    children: [
+      { href: "/admin/team-portal-control", label: "Control Panel" },
+      { href: "/admin/team-details", label: "Team Details" },
+      { href: "/admin/request-approvals", label: "Request Approvals" },
+    ],
+  },
 ];
 
 async function logoutAction() {

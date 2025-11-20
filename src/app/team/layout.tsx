@@ -47,6 +47,9 @@ export default async function TeamLayout({ children }: { children: ReactNode }) 
             <a href="/team/program-register" className="rounded-2xl px-4 py-2 text-sm font-semibold hover:bg-white/10">
               Program Registration
             </a>
+            <a href="/team/replacement-request" className="rounded-2xl px-4 py-2 text-sm font-semibold hover:bg-white/10">
+              Replacement Request
+            </a>
           </nav>
         )}
         <section>{children}</section>

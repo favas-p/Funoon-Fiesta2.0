@@ -89,12 +89,14 @@ export function TeamProgramRegister({
                         Chest #{registration.studentChest} · {registration.teamName}
                       </p>
                     </div>
-                    <form action={removeAction}>
-                      <input type="hidden" name="registrationId" value={registration.id} />
-                      <Button type="submit" variant="ghost" className="text-red-300 hover:text-red-100">
-                        Remove
-                      </Button>
-                    </form>
+                    {isOpen && (
+                      <form action={removeAction}>
+                        <input type="hidden" name="registrationId" value={registration.id} />
+                        <Button type="submit" variant="ghost" className="text-red-300 hover:text-red-100">
+                          Remove
+                        </Button>
+                      </form>
+                    )}
                   </div>
                 ))
               )}

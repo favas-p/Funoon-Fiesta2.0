@@ -111,3 +111,22 @@ export interface ProgramRegistration {
   timestamp: string;
 }
 
+export interface ReplacementRequest {
+  id: string;
+  programId: string;
+  programName: string;
+  oldStudentId: string;
+  oldStudentName: string;
+  oldStudentChest: string;
+  newStudentId: string;
+  newStudentName: string;
+  newStudentChest: string;
+  teamId: string;
+  teamName: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
+

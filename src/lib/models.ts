@@ -6,6 +6,7 @@ import type {
   Program,
   ProgramRegistration,
   RegistrationSchedule,
+  ReplacementRequest,
   ResultRecord,
   Student,
   Team,
@@ -170,4 +171,30 @@ export const RegistrationScheduleModel =
     "RegistrationSchedule",
     RegistrationScheduleSchema,
   );
+
+const ReplacementRequestSchema = new Schema<ReplacementRequest>(
+  {
+    id: { type: String, required: true, unique: true },
+    programId: { type: String, required: true },
+    programName: { type: String, required: true },
+    oldStudentId: { type: String, required: true },
+    oldStudentName: { type: String, required: true },
+    oldStudentChest: { type: String, required: true },
+    newStudentId: { type: String, required: true },
+    newStudentName: { type: String, required: true },
+    newStudentChest: { type: String, required: true },
+    teamId: { type: String, required: true },
+    teamName: { type: String, required: true },
+    reason: { type: String, required: true },
+    status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+    submittedAt: { type: String, required: true },
+    reviewedAt: { type: String },
+    reviewedBy: { type: String },
+  },
+  { timestamps: true },
+);
+
+export const ReplacementRequestModel =
+  (models.ReplacementRequest as Model<ReplacementRequest>) ??
+  model<ReplacementRequest>("ReplacementRequest", ReplacementRequestSchema);
 

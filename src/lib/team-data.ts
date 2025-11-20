@@ -5,11 +5,13 @@ import {
   Program,
   ProgramRegistration,
   RegistrationSchedule,
+  ReplacementRequest,
 } from "@/lib/types";
 import {
   ProgramModel,
   ProgramRegistrationModel,
   RegistrationScheduleModel,
+  ReplacementRequestModel,
   StudentModel,
   TeamModel,
 } from "./models";
@@ -183,5 +185,107 @@ export async function updateRegistrationSchedule(schedule: RegistrationSchedule)
 export async function isRegistrationOpen(now: Date = new Date()): Promise<boolean> {
   const schedule = await getRegistrationSchedule();
   return now >= new Date(schedule.startDateTime) && now <= new Date(schedule.endDateTime);
+}
+
+export async function getReplacementRequests(teamId?: string): Promise<ReplacementRequest[]> {
+  const query = teamId ? { teamId } : {};
+  const requests = await ReplacementRequestModel.find(query).lean().sort({ submittedAt: -1 });
+  return requests.map((request) => ({
+    id: request.id,
+    programId: request.programId,
+    programName: request.programName,
+    oldStudentId: request.oldStudentId,
+    oldStudentName: request.oldStudentName,
+    oldStudentChest: request.oldStudentChest,
+    newStudentId: request.newStudentId,
+    newStudentName: request.newStudentName,
+    newStudentChest: request.newStudentChest,
+    teamId: request.teamId,
+    teamName: request.teamName,
+    reason: request.reason,
+    status: request.status,
+    submittedAt: request.submittedAt,
+    reviewedAt: request.reviewedAt,
+    reviewedBy: request.reviewedBy,
+  }));
+}
+
+export async function createReplacementRequest(request: {
+  programId: string;
+  programName: string;
+  oldStudentId: string;
+  oldStudentName: string;
+  oldStudentChest: string;
+  newStudentId: string;
+  newStudentName: string;
+  newStudentChest: string;
+  teamId: string;
+  teamName: string;
+  reason: string;
+}): Promise<ReplacementRequest> {
+  const record: ReplacementRequest = {
+    id: randomUUID(),
+    ...request,
+    status: "pending",
+    submittedAt: new Date().toISOString(),
+  };
+  await ReplacementRequestModel.create(record);
+  return record;
+}
+
+export async function approveReplacementRequest(
+  requestId: string,
+  reviewedBy: string,
+): Promise<void> {
+  const request = await ReplacementRequestModel.findOne({ id: requestId }).lean();
+  if (!request) {
+    throw new Error("Replacement request not found");
+  }
+  if (request.status !== "pending") {
+    throw new Error("Request has already been processed");
+  }
+
+  // Update the registration
+  await ProgramRegistrationModel.updateOne(
+    {
+      programId: request.programId,
+      studentId: request.oldStudentId,
+    },
+    {
+      $set: {
+        studentId: request.newStudentId,
+        studentName: request.newStudentName,
+        studentChest: request.newStudentChest,
+      },
+    },
+  );
+
+  // Update request status
+  await ReplacementRequestModel.updateOne(
+    { id: requestId },
+    {
+      $set: {
+        status: "approved",
+        reviewedAt: new Date().toISOString(),
+        reviewedBy,
+      },
+    },
+  );
+}
+
+export async function rejectReplacementRequest(
+  requestId: string,
+  reviewedBy: string,
+): Promise<void> {
+  await ReplacementRequestModel.updateOne(
+    { id: requestId },
+    {
+      $set: {
+        status: "rejected",
+        reviewedAt: new Date().toISOString(),
+        reviewedBy,
+      },
+    },
+  );
 }
 
