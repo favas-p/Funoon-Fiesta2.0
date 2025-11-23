@@ -23,6 +23,7 @@ function sanitizeColor(color?: string) {
 }
 
 export async function getPortalTeams(): Promise<PortalTeam[]> {
+  await connectDB();
   const teams = await TeamModel.find().lean();
   return teams.map((team) => ({
     id: team.id,
@@ -34,6 +35,7 @@ export async function getPortalTeams(): Promise<PortalTeam[]> {
 }
 
 export async function savePortalTeam(team: PortalTeam) {
+  await connectDB();
   await TeamModel.updateOne(
     { id: team.id },
     {
@@ -62,6 +64,7 @@ export async function deletePortalTeam(teamId: string) {
 }
 
 export async function getPortalStudents(): Promise<PortalStudent[]> {
+  await connectDB();
   const [students, teams] = await Promise.all([
     StudentModel.find().lean(),
     TeamModel.find().lean(),
@@ -83,6 +86,7 @@ export async function upsertPortalStudent(input: {
   chestNumber: string;
   teamId: string;
 }) {
+  await connectDB();
   const chestNumber = input.chestNumber.trim().toUpperCase();
   const duplicate = await StudentModel.findOne({
     chest_no: chestNumber,
@@ -118,11 +122,13 @@ export async function upsertPortalStudent(input: {
 }
 
 export async function deletePortalStudent(studentId: string) {
+  await connectDB();
   await StudentModel.deleteOne({ id: studentId });
   await ProgramRegistrationModel.deleteMany({ studentId });
 }
 
 export async function getProgramsWithLimits(): Promise<Program[]> {
+  await connectDB();
   const programs = await ProgramModel.find().lean();
   return programs.map((program) => ({
     ...program,
@@ -131,6 +137,7 @@ export async function getProgramsWithLimits(): Promise<Program[]> {
 }
 
 export async function getProgramRegistrations(): Promise<ProgramRegistration[]> {
+  await connectDB();
   const registrations = await ProgramRegistrationModel.find().lean();
   return registrations.map((registration) => ({
     id: registration.id,
@@ -154,6 +161,7 @@ export async function registerCandidate(entry: {
   teamId: string;
   teamName: string;
 }) {
+  await connectDB();
   const record: ProgramRegistration = {
     id: randomUUID(),
     ...entry,
@@ -173,14 +181,17 @@ export async function registerCandidate(entry: {
 }
 
 export async function removeProgramRegistration(registrationId: string) {
+  await connectDB();
   await ProgramRegistrationModel.deleteOne({ id: registrationId });
 }
 
 export async function removeRegistrationsByProgram(programId: string) {
+  await connectDB();
   await ProgramRegistrationModel.deleteMany({ programId });
 }
 
 export async function getRegistrationSchedule(): Promise<RegistrationSchedule> {
+  await connectDB();
   const doc = await RegistrationScheduleModel.findOne().lean();
   if (doc) {
     return { startDateTime: doc.startDateTime, endDateTime: doc.endDateTime };
@@ -194,6 +205,7 @@ export async function getRegistrationSchedule(): Promise<RegistrationSchedule> {
 }
 
 export async function updateRegistrationSchedule(schedule: RegistrationSchedule) {
+  await connectDB();
   await RegistrationScheduleModel.updateOne(
     { key: "global" },
     { $set: schedule, $setOnInsert: { key: "global" } },
@@ -284,6 +296,7 @@ export function validateParticipationLimit(
 }
 
 export async function getReplacementRequests(teamId?: string): Promise<ReplacementRequest[]> {
+  await connectDB();
   const query = teamId ? { teamId } : {};
   const requests = await ReplacementRequestModel.find(query).lean().sort({ submittedAt: -1 });
   return requests.map((request) => ({
@@ -319,6 +332,7 @@ export async function createReplacementRequest(request: {
   teamName: string;
   reason: string;
 }): Promise<ReplacementRequest> {
+  await connectDB();
   const record: ReplacementRequest = {
     id: randomUUID(),
     ...request,
@@ -342,6 +356,7 @@ export async function approveReplacementRequest(
   requestId: string,
   reviewedBy: string,
 ): Promise<void> {
+  await connectDB();
   const request = await ReplacementRequestModel.findOne({ id: requestId }).lean();
   if (!request) {
     throw new Error("Replacement request not found");
@@ -382,6 +397,7 @@ export async function rejectReplacementRequest(
   requestId: string,
   reviewedBy: string,
 ): Promise<void> {
+  await connectDB();
   await ReplacementRequestModel.updateOne(
     { id: requestId },
     {

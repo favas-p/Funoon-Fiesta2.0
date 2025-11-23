@@ -51,6 +51,25 @@ function parseLeaders(leaderString: string): string[] {
     .filter(Boolean);
 }
 
+function isValidImageUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  // Check if it's a valid URL (starts with http/https) or a relative path (starts with /)
+  return /^(https?:\/\/|\/)/i.test(url);
+}
+
+function getLeaderPhoto(leaderPhoto: string | undefined | null, leaderIndex: number): string {
+  if (!isValidImageUrl(leaderPhoto)) {
+    // Fallback to a default placeholder image from Unsplash
+    return `https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=120&h=120&seed=${leaderIndex}`;
+  }
+  // If it's already a full URL with query params, use it as is
+  if (leaderPhoto?.includes('?')) {
+    return leaderPhoto;
+  }
+  // Otherwise add the image optimization params
+  return `${leaderPhoto}?auto=format&fit=facearea&facepad=2&w=120&h=120&seed=${leaderIndex}`;
+}
+
 export function TeamLeadersShowcase({ teams }: TeamLeadersShowcaseProps) {
   return (
     <section className="space-y-8">
@@ -138,38 +157,7 @@ export function TeamLeadersShowcase({ teams }: TeamLeadersShowcaseProps) {
                               style={{ borderColor: colors.primary }}
                             >
                               <Image
-                                src={`${team.leader_photo}?auto=format&fit=facearea&facepad=2&w=120&h=120&seed=${leaderIndex}`}
-                                alt={leader}
-                                fill
-                                className="object-cover"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-white truncate">{leader}</p>
-                              <p className="text-xs text-white/60">
-                                {leaders.length > 1 ? "Co-Leader" : "Team Leader"}
-                              </p>
-                            </div>
-                            <Crown className="w-5 h-5 text-yellow-400/70 group-hover/item:text-yellow-400 flex-shrink-0 transition-colors" />
-                          </motion.div>
-                        ))}
-                      </div>
-                      <div className="space-y-3">
-                        {leaders.map((leader, leaderIndex) => (
-                          <motion.div
-                            key={leaderIndex}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: leaderIndex * 0.1 }}
-                            className="flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group/item"
-                          >
-                            <div
-                              className="relative w-14 h-14 rounded-full overflow-hidden border-2 flex-shrink-0 ring-2 ring-transparent group-hover/item:ring-yellow-400/50 transition-all"
-                              style={{ borderColor: colors.primary }}
-                            >
-                              <Image
-                                src={`${team.leader_photo}?auto=format&fit=facearea&facepad=2&w=120&h=120&seed=${leaderIndex}`}
+                                src={getLeaderPhoto(team.leader_photo, leaderIndex)}
                                 alt={leader}
                                 fill
                                 className="object-cover"
