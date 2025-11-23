@@ -25,7 +25,6 @@ const fadeIn = (direction: string, delay: number) => ({
     transition: {
       duration: 0.5,
       delay,
-      ease: "easeOut",
     },
   },
 });

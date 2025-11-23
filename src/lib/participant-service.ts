@@ -200,27 +200,27 @@ export async function getParticipantProfile(
     pendingPrograms: enrichedRegistrations.filter((r) => r.status === "pending_result").length,
     registeredPrograms: enrichedRegistrations.filter((r) => r.status === "registered").length,
     wins: {
-      first: enrichedRegistrations.filter((r) => r.result?.position === 1).length,
-      second: enrichedRegistrations.filter((r) => r.result?.position === 2).length,
-      third: enrichedRegistrations.filter((r) => r.result?.position === 3).length,
+      first: enrichedRegistrations.filter((r) => "result" in r && r.result?.position === 1).length,
+      second: enrichedRegistrations.filter((r) => "result" in r && r.result?.position === 2).length,
+      third: enrichedRegistrations.filter((r) => "result" in r && r.result?.position === 3).length,
     },
     grades: {
-      A: enrichedRegistrations.filter((r) => r.result?.grade === "A").length,
-      B: enrichedRegistrations.filter((r) => r.result?.grade === "B").length,
-      C: enrichedRegistrations.filter((r) => r.result?.grade === "C").length,
+      A: enrichedRegistrations.filter((r) => "result" in r && r.result?.grade === "A").length,
+      B: enrichedRegistrations.filter((r) => "result" in r && r.result?.grade === "B").length,
+      C: enrichedRegistrations.filter((r) => "result" in r && r.result?.grade === "C").length,
     },
     totalPenalties: enrichedRegistrations.reduce(
-      (sum, r) => sum + (r.penalty?.points || 0),
+      (sum, r) => sum + ("penalty" in r && r.penalty?.points || 0),
       0,
     ),
     pointsByCategory: {
       position: enrichedRegistrations.reduce(
-        (sum, r) => sum + (r.result?.score || 0),
+        (sum, r) => sum + ("result" in r && r.result?.score || 0),
         0,
       ),
       grade: 0, // Grade points are included in position score
       penalty: enrichedRegistrations.reduce(
-        (sum, r) => sum + (r.penalty?.points || 0),
+        (sum, r) => sum + ("penalty" in r && r.penalty?.points || 0),
         0,
       ),
     },

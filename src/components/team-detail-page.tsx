@@ -144,17 +144,17 @@ export function TeamDetailPage({
       yPos += 10;
 
       doc.setFontSize(12);
-      doc.setFont(undefined, "bold");
+      doc.setFont("helvetica", "bold");
       doc.text("Candidates & Assigned Programs", 14, yPos);
       yPos += 8;
 
       if (tableData.length > 0) {
         doc.setFontSize(9);
-        doc.setFont(undefined, "normal");
+        doc.setFont("helvetica", "normal");
         const colWidths = [50, 40, 100];
         const startX = 14;
 
-        doc.setFont(undefined, "bold");
+        doc.setFont("helvetica", "bold");
         const headers = ["Student Name", "Chest #", "Assigned Programs"];
         let xPos = startX;
         headers.forEach((header, i) => {
@@ -163,7 +163,7 @@ export function TeamDetailPage({
         });
         yPos += 6;
 
-        doc.setFont(undefined, "normal");
+        doc.setFont("helvetica", "normal");
         tableData.forEach(({ student, programNames }) => {
           if (yPos > 280) {
             doc.addPage();

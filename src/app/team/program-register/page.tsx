@@ -34,15 +34,20 @@ async function registerProgramAction(formData: FormData) {
     getProgramRegistrations(),
   ]);
   const program = programs.find((item) => item.id === programId);
-  if (!program) redirectWithMessage("Program not found.");
+  if (!program) {
+    redirectWithMessage("Program not found.");
+    return;
+  }
+  const candidateLimit = program.candidateLimit ?? 1;
   const student = students.find((item) => item.id === studentId);
   if (!student || student.teamId !== team.id) {
     redirectWithMessage("You can only register your team members.");
+    return;
   }
   const teamEntries = registrations.filter(
     (registration) => registration.programId === programId && registration.teamId === team.id,
   );
-  if (teamEntries.length >= program.candidateLimit) {
+  if (teamEntries.length >= candidateLimit) {
     redirectWithMessage("Candidate limit reached for this program.");
   }
   if (
@@ -101,22 +106,27 @@ async function registerMultipleStudentsAction(formData: FormData) {
     getProgramRegistrations(),
   ]);
   const program = programs.find((item) => item.id === programId);
-  if (!program) redirectWithMessage("Program not found.");
+  if (!program) {
+    redirectWithMessage("Program not found.");
+    return;
+  }
+  const candidateLimit = program.candidateLimit ?? 1;
 
   // Validate all students belong to the team
   const teamStudents = students.filter((s) => s.teamId === team.id);
   const selectedStudents = teamStudents.filter((s) => studentIds.includes(s.id));
   if (selectedStudents.length !== studentIds.length) {
     redirectWithMessage("You can only register your team members.");
+    return;
   }
 
   // Check candidate limit
   const teamEntries = registrations.filter(
     (registration) => registration.programId === programId && registration.teamId === team.id,
   );
-  if (teamEntries.length + selectedStudents.length > program.candidateLimit) {
+  if (teamEntries.length + selectedStudents.length > candidateLimit) {
     redirectWithMessage(
-      `Cannot register ${selectedStudents.length} students. Only ${program.candidateLimit - teamEntries.length} slots remaining.`,
+      `Cannot register ${selectedStudents.length} students. Only ${candidateLimit - teamEntries.length} slots remaining.`,
     );
   }
 
@@ -242,8 +252,8 @@ export default async function ProgramRegisterPage({
       )}
 
       <TeamProgramRegister
-        programs={programs}
-        allPrograms={programs}
+        programs={programs.map(p => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))}
+        allPrograms={programs.map(p => ({ ...p, candidateLimit: p.candidateLimit ?? 1 }))}
         teamRegistrations={teamRegistrations}
         teamStudents={teamStudents}
         isOpen={open}

@@ -42,7 +42,7 @@ function buildInitialPenalties(result: Awaited<ReturnType<typeof getApprovedResu
     result?.penalties?.map((penalty) => ({
       targetId: penalty.student_id ?? penalty.team_id ?? "",
       points: penalty.points,
-      type: penalty.student_id ? "student" : "team",
+      type: (penalty.student_id ? "student" : "team") as "student" | "team",
     })) ?? []
   );
 }
@@ -102,6 +102,7 @@ export default async function EditApprovedResultPage({
 
   const initial = buildInitialEntries(result);
   const initialPenaltyList = buildInitialPenalties(result);
+  const programId = program.id;
 
   async function updateApprovedAction(formData: FormData) {
     "use server";
@@ -131,7 +132,7 @@ export default async function EditApprovedResultPage({
         : null;
 
     const penalties = parsePenaltyPayloads(formData);
-    await ensureRegisteredCandidates(program.id, [
+    await ensureRegisteredCandidates(programId, [
       ...winners.map((winner) => winner.id),
       ...penalties.map((penalty) => penalty.id),
     ]);

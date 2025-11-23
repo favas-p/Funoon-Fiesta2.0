@@ -209,7 +209,7 @@ export function StudentManager({
       const startX = 14;
       
       doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
+      doc.setFont("helvetica", "bold");
       let xPos = startX;
       headers.forEach((header, i) => {
         doc.text(header, xPos, yPos);
@@ -217,7 +217,7 @@ export function StudentManager({
       });
       
       yPos += 6;
-      doc.setFont(undefined, "normal");
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       
       sortedStudents.forEach((student, index) => {

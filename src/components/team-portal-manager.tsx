@@ -6,14 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
-
-interface PortalTeam {
-  id: string;
-  teamName: string;
-  password: string;
-  leaderName: string;
-  themeColor: string;
-}
+import type { PortalTeam } from "@/lib/types";
 
 interface PortalStudent {
   id: string;
@@ -607,7 +600,7 @@ export function TeamPortalManager({
               <Input
                 name="themeColor"
                 type="text"
-                defaultValue={editingTeam.themeColor}
+                defaultValue={editingTeam.themeColor || "#0ea5e9"}
                 placeholder="#0ea5e9"
               />
             </div>
@@ -648,9 +641,9 @@ export function TeamPortalManager({
               <div className="flex items-center gap-2 mt-1">
                 <div
                   className="h-6 w-6 rounded border border-white/20"
-                  style={{ backgroundColor: viewingTeam.themeColor }}
+                  style={{ backgroundColor: viewingTeam.themeColor || "#0ea5e9" }}
                 />
-                <p className="text-sm text-white">{viewingTeam.themeColor}</p>
+                <p className="text-sm text-white">{viewingTeam.themeColor || "#0ea5e9"}</p>
               </div>
             </div>
             {(() => {

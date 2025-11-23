@@ -135,7 +135,7 @@ export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) 
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-bold">{student.name}</h1>
-              <Badge variant="secondary" className="text-lg px-3 py-1">
+              <Badge tone="cyan" className="text-lg px-3 py-1">
                 Chest: {student.chest_no}
               </Badge>
             </div>
@@ -319,17 +319,17 @@ export function ParticipantProfileDisplay({ profile }: ParticipantProfileProps) 
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold">{reg.program.name}</h3>
                         <Badge
-                          variant="outline"
+                          tone="pink"
                           className={STATUS_COLORS[reg.status]}
                         >
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {reg.status.replace("_", " ")}
                         </Badge>
-                        <Badge variant="secondary">
+                        <Badge tone="cyan">
                           {reg.program.section}
                         </Badge>
                         {reg.program.category !== "none" && (
-                          <Badge variant="outline">
+                          <Badge tone="amber">
                             Cat {reg.program.category}
                           </Badge>
                         )}

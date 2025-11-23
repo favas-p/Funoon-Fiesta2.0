@@ -119,7 +119,7 @@ export function ParticipantSearch() {
                           Chest: {result.chest_no}
                         </p>
                       </div>
-                      <Badge variant="secondary">View Profile</Badge>
+                      <Badge tone="cyan">View Profile</Badge>
                     </div>
                   </Card>
                 ))}

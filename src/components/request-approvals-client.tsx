@@ -31,28 +31,28 @@ async function exportRequestToPDF(request: ReplacementRequest) {
     yPos += 8;
     
     doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Program Information", 14, yPos + 5);
     yPos += 12;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`Program: ${request.programName}`, 14, yPos);
     yPos += 7;
     
     doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Team Information", 14, yPos + 5);
     yPos += 12;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`Team: ${request.teamName}`, 14, yPos);
     yPos += 7;
     
     doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Replacement Details", 14, yPos + 5);
     yPos += 12;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`Current Student: ${request.oldStudentName} (Chest: ${request.oldStudentChest})`, 14, yPos);
     yPos += 7;
@@ -60,20 +60,20 @@ async function exportRequestToPDF(request: ReplacementRequest) {
     yPos += 7;
     
     doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Reason", 14, yPos + 5);
     yPos += 12;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     const reasonLines = doc.splitTextToSize(request.reason, 180);
     doc.text(reasonLines, 14, yPos);
     yPos += reasonLines.length * 5 + 5;
     
     doc.setFontSize(12);
-    doc.setFont(undefined, "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("Status", 14, yPos + 5);
     yPos += 12;
-    doc.setFont(undefined, "normal");
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`Status: ${request.status.toUpperCase()}`, 14, yPos);
     if (request.reviewedAt) {
@@ -229,7 +229,7 @@ export function RequestApprovalsClient({
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex-1 space-y-3">
                   <div className="flex items-center gap-3">
-                    <Badge tone={request.status === "approved" ? "emerald" : "red"}>
+                    <Badge tone={request.status === "approved" ? "emerald" : "pink"}>
                       {request.status === "approved" ? "Approved" : "Rejected"}
                     </Badge>
                     <span className="text-xs text-white/60">

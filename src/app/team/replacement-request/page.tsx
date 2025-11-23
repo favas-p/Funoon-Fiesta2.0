@@ -64,9 +64,11 @@ async function submitReplacementRequestAction(formData: FormData) {
 
   if (!oldStudent || oldStudent.teamId !== team.id) {
     redirectWithMessage("Old student not found or does not belong to your team.");
+    return;
   }
   if (!newStudent || newStudent.teamId !== team.id) {
     redirectWithMessage("New student not found or does not belong to your team.");
+    return;
   }
 
   const existingRegistration = registrations.find(
@@ -74,6 +76,7 @@ async function submitReplacementRequestAction(formData: FormData) {
   );
   if (!existingRegistration) {
     redirectWithMessage("The old student is not registered for this program.");
+    return;
   }
 
   const newStudentAlreadyRegistered = registrations.some(
@@ -81,6 +84,14 @@ async function submitReplacementRequestAction(formData: FormData) {
   );
   if (newStudentAlreadyRegistered) {
     redirectWithMessage("The new student is already registered for this program.");
+    return;
+  }
+
+  // TypeScript type narrowing - these are guaranteed to be defined at this point
+  // We've already checked above, but TypeScript needs explicit assertion
+  if (!oldStudent || !newStudent || !program) {
+    redirectWithMessage("Invalid data.");
+    return;
   }
 
   // Check for duplicate pending replacement requests
@@ -95,6 +106,7 @@ async function submitReplacementRequestAction(formData: FormData) {
     redirectWithMessage(
       `A pending replacement request already exists for "${oldStudent.name}" in program "${program.name}". Please wait for admin approval or contact support.`,
     );
+    return;
   }
 
   try {

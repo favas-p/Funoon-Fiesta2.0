@@ -13,8 +13,8 @@ export default async function TeamDashboardPage() {
     getPortalStudents(),
     getProgramRegistrations(),
   ]);
-  const teamStudents = students.filter((student) => student.team === team.teamName);
-  const teamRegistrations = registrations.filter((registration) => registration.team === team.teamName);
+  const teamStudents = students.filter((student) => student.teamId === team.id);
+  const teamRegistrations = registrations.filter((registration) => registration.teamId === team.id);
 
   return (
     <div className="space-y-6">

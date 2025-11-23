@@ -131,7 +131,12 @@ export function LiveScorePie({ teams, liveScores }: LiveScorePieProps) {
                 fontSize={11}
                 fontWeight={500}
                 fill="currentColor"
-                formatter={(value: number) => formatNumber(value)}
+                formatter={(value: any) => {
+                  if (typeof value === 'number') {
+                    return formatNumber(value);
+                  }
+                  return String(value ?? '');
+                }}
               />
             </Pie>
           </PieChart>

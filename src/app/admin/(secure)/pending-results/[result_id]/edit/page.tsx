@@ -42,7 +42,7 @@ function buildInitialPenalties(result: Awaited<ReturnType<typeof getPendingResul
     result?.penalties?.map((penalty) => ({
       targetId: penalty.student_id ?? penalty.team_id ?? "",
       points: penalty.points,
-      type: penalty.student_id ? "student" : "team",
+      type: (penalty.student_id ? "student" : "team") as "student" | "team",
     })) ?? []
   );
 }
@@ -102,6 +102,7 @@ export default async function EditPendingResultPage({
 
   const initial = buildInitialEntries(result);
   const initialPenaltyList = buildInitialPenalties(result);
+  const programId = program.id;
 
   async function updatePendingAction(formData: FormData) {
     "use server";
@@ -131,7 +132,7 @@ export default async function EditPendingResultPage({
         : null;
 
     const penalties = parsePenaltyPayloads(formData);
-    await ensureRegisteredCandidates(program.id, [
+    await ensureRegisteredCandidates(programId, [
       ...winners.map((winner) => winner.id),
       ...penalties.map((penalty) => penalty.id),
     ]);
