@@ -1,5 +1,5 @@
 import { getApprovedResults, getPrograms } from "@/lib/data";
-import { ProgramsGrid } from "@/components/programs-grid";
+import { ResultsRealtime } from "@/components/results-realtime";
 
 async function getResultsData() {
   const [results, programs] = await Promise.all([
@@ -19,6 +19,12 @@ async function getResultsData() {
 export default async function ResultsPage() {
   const data = await getResultsData();
 
-  return <ProgramsGrid programs={data.programs} results={data.results} programMap={data.programMap} />;
+  return (
+    <ResultsRealtime
+      programs={data.programs}
+      results={data.results}
+      programMap={data.programMap}
+    />
+  );
 }
 

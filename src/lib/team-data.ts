@@ -99,6 +99,8 @@ export async function upsertPortalStudent(input: {
   }
 
   const studentId = input.id ?? randomUUID();
+  const isNew = !input.id;
+  
   try {
     await StudentModel.updateOne(
       { id: studentId },
@@ -112,6 +114,14 @@ export async function upsertPortalStudent(input: {
       },
       { upsert: true },
     );
+    
+    // Emit real-time event
+    const { emitStudentCreated, emitStudentUpdated } = await import("./pusher");
+    if (isNew) {
+      await emitStudentCreated(studentId, input.teamId);
+    } else {
+      await emitStudentUpdated(studentId, input.teamId);
+    }
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for chest_no unique index
     if (error.code === 11000 && error.keyPattern?.chest_no) {
@@ -123,8 +133,15 @@ export async function upsertPortalStudent(input: {
 
 export async function deletePortalStudent(studentId: string) {
   await connectDB();
+  const student = await StudentModel.findOne({ id: studentId }).lean();
   await StudentModel.deleteOne({ id: studentId });
   await ProgramRegistrationModel.deleteMany({ studentId });
+  
+  // Emit real-time event
+  if (student?.team_id) {
+    const { emitStudentDeleted } = await import("./pusher");
+    await emitStudentDeleted(studentId, student.team_id);
+  }
 }
 
 export async function getProgramsWithLimits(): Promise<Program[]> {
@@ -182,7 +199,14 @@ export async function registerCandidate(entry: {
 
 export async function removeProgramRegistration(registrationId: string) {
   await connectDB();
+  const registration = await ProgramRegistrationModel.findOne({ id: registrationId }).lean();
   await ProgramRegistrationModel.deleteOne({ id: registrationId });
+  
+  // Emit real-time event
+  if (registration) {
+    const { emitRegistrationDeleted } = await import("./pusher");
+    await emitRegistrationDeleted(registrationId, registration.programId, registration.teamId);
+  }
 }
 
 export async function removeRegistrationsByProgram(programId: string) {

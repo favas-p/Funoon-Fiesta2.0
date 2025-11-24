@@ -230,12 +230,17 @@ export async function createStudent(input: Omit<Student, "id" | "total_points">)
   }
   
   try {
+    const studentId = randomUUID();
     await StudentModel.create({
       ...input,
       chest_no: normalizedChestNo,
-      id: randomUUID(),
+      id: studentId,
       total_points: 0,
     });
+    
+    // Emit real-time event
+    const { emitStudentCreated } = await import("./pusher");
+    await emitStudentCreated(studentId, input.team_id);
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000)
     if (error.code === 11000) {
@@ -270,7 +275,17 @@ export async function updateStudentById(
   }
   
   try {
+    // Get team_id before update
+    const student = await StudentModel.findOne({ id }).lean();
+    const teamId = student?.team_id || data.team_id || "";
+    
     await StudentModel.updateOne({ id }, data);
+    
+    // Emit real-time event
+    if (teamId) {
+      const { emitStudentUpdated } = await import("./pusher");
+      await emitStudentUpdated(id, teamId);
+    }
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000)
     if (error.code === 11000) {
@@ -282,7 +297,14 @@ export async function updateStudentById(
 
 export async function deleteStudentById(id: string) {
   await connectDB();
+  const student = await StudentModel.findOne({ id }).lean();
   await StudentModel.deleteOne({ id });
+  
+  // Emit real-time event
+  if (student?.team_id) {
+    const { emitStudentDeleted } = await import("./pusher");
+    await emitStudentDeleted(id, student.team_id);
+  }
 }
 
 // Available jury avatar images
@@ -354,6 +376,12 @@ export async function assignProgramToJury(programId: string, juryId: string) {
       { program_id: programId, jury_id: juryId, status: "pending" },
       { upsert: true },
     );
+    
+    // Emit real-time event only if assignment was newly created
+    if (!existing) {
+      const { emitAssignmentCreated } = await import("./pusher");
+      await emitAssignmentCreated(programId, juryId);
+    }
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for program_id + jury_id unique index
     if (error.code === 11000 && error.keyPattern?.program_id && error.keyPattern?.jury_id) {
@@ -375,6 +403,10 @@ export async function updateAssignmentStatus(
 export async function deleteAssignment(programId: string, juryId: string) {
   await connectDB();
   await AssignedProgramModel.deleteOne({ program_id: programId, jury_id: juryId });
+  
+  // Emit real-time event
+  const { emitAssignmentDeleted } = await import("./pusher");
+  await emitAssignmentDeleted(programId, juryId);
 }
 
 const CATEGORY_SCORES: Record<

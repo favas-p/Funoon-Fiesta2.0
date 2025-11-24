@@ -223,6 +223,10 @@ export async function submitResultToPending({
   try {
     await PendingResultModel.create(record);
     await updateAssignmentStatus(program.id, jury.id, "submitted");
+    
+    // Emit real-time event
+    const { emitResultSubmitted } = await import("./pusher");
+    await emitResultSubmitted(record.id, program.id, jury.id);
   } catch (error: any) {
     // Handle MongoDB duplicate key error (code 11000) for program_id unique index
     if (error.code === 11000 && error.keyPattern?.program_id) {
@@ -257,6 +261,10 @@ export async function approveResult(resultId: string) {
 
   await updateAssignmentStatus(record.program_id, record.jury_id, "completed");
 
+  // Emit real-time event
+  const { emitResultApproved } = await import("./pusher");
+  await emitResultApproved(resultId, record.program_id);
+
   revalidatePath("/");
   revalidatePath("/scoreboard");
   revalidatePath("/results");
@@ -270,6 +278,10 @@ export async function rejectResult(resultId: string) {
   if (!record) return;
   await PendingResultModel.deleteOne({ id: resultId });
   await updateAssignmentStatus(record.program_id, record.jury_id, "pending");
+
+  // Emit real-time event
+  const { emitResultRejected } = await import("./pusher");
+  await emitResultRejected(resultId, record.program_id);
 
   revalidatePath("/admin/pending-results");
   revalidatePath("/jury/programs");
@@ -298,6 +310,11 @@ export async function updatePendingResultEntries(
       submitted_at: new Date().toISOString(),
     },
   );
+  
+  // Emit real-time event for pending result update
+  const { emitResultSubmitted } = await import("./pusher");
+  await emitResultSubmitted(resultId, record.program_id, record.jury_id);
+  
   revalidatePath("/admin/pending-results");
 }
 

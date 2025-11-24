@@ -1,4 +1,4 @@
-import { ResultManager } from "@/components/result-manager";
+import { PendingResultsRealtime } from "@/components/pending-results-realtime";
 import {
   getJuries,
   getPendingResults,
@@ -52,19 +52,15 @@ export default async function PendingResultsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      <ResultManager
-        results={pending}
-        programs={programs}
-        juries={juries}
-        students={students}
-        teams={teams}
-        deleteAction={rejectResultAction}
-        approveAction={approveResultAction}
-        rejectAction={rejectResultAction}
-        isPending={true}
-      />
-    </div>
+    <PendingResultsRealtime
+      results={pending}
+      programs={programs}
+      juries={juries}
+      students={students}
+      teams={teams}
+      approveAction={approveResultAction}
+      rejectAction={rejectResultAction}
+    />
   );
 }
 

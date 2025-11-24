@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ToastProvider } from "@/components/toast-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineIndicator } from "@/components/offline-indicator";
+import { RealtimeProvider } from "@/components/realtime-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -73,11 +74,13 @@ export default function RootLayout({
       >
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#3b0764,_#020617_55%)]">
         <SpeedInsights/>
-        <OfflineIndicator />
-        <ToastProvider>
-          {children}
-        </ToastProvider>
-        <PWAInstallPrompt />
+        <RealtimeProvider>
+          <OfflineIndicator />
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+          <PWAInstallPrompt />
+        </RealtimeProvider>
         </div>
       </body>
     </html>

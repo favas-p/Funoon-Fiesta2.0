@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useAssignmentUpdates } from "@/hooks/use-realtime";
 import {
   CheckCircle2,
   Clock,
@@ -60,6 +62,7 @@ export function AssignmentManager({
   juries,
   deleteAction,
 }: AssignmentManagerProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("by-jury");
@@ -71,6 +74,11 @@ export function AssignmentManager({
     juryName: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Subscribe to real-time assignment updates
+  useAssignmentUpdates(() => {
+    router.refresh();
+  });
 
   // Create maps with proper error handling
   const programMap = useMemo(() => {
