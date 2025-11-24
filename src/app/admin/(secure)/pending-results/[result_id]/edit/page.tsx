@@ -11,6 +11,8 @@ import { getProgramRegistrations } from "@/lib/team-data";
 import type { GradeType } from "@/lib/types";
 import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { updatePendingResultEntries } from "@/lib/result-service";
+import { redirectWithToast } from "@/lib/actions";
+import { revalidatePath } from "next/cache";
 
 interface EditPendingResultPageProps {
   params: Promise<{ result_id: string }>;
@@ -106,38 +108,47 @@ export default async function EditPendingResultPage({
 
   async function updatePendingAction(formData: FormData) {
     "use server";
-    const winners = [1, 2, 3].map((position) => {
-      const value = String(formData.get(`winner_${position}`) ?? "").trim();
-      if (!value) {
-        throw new Error("All placements are required.");
-      }
-      const grade = String(formData.get(`grade_${position}`) ?? "none") as GradeType;
-      return {
-        position: position as 1 | 2 | 3,
-        id: value,
-        grade,
-      };
-    });
-    const penaltyType = String(formData.get("penalty_type") ?? "none");
-    const penaltyTarget = String(formData.get("penalty_target") ?? "").trim();
-    const penaltyPointsRaw = String(formData.get("penalty_points") ?? "").trim();
-    const penaltyPoints = penaltyPointsRaw ? Math.abs(Number(penaltyPointsRaw)) : 0;
-    const penalty =
-      penaltyTarget && penaltyPoints > 0 && (penaltyType === "student" || penaltyType === "team")
-        ? {
-            id: penaltyTarget,
-            type: penaltyType,
-            points: penaltyPoints,
-          }
-        : null;
+    try {
+      const winners = [1, 2, 3].map((position) => {
+        const value = String(formData.get(`winner_${position}`) ?? "").trim();
+        if (!value) {
+          throw new Error("All placements are required.");
+        }
+        const grade = String(formData.get(`grade_${position}`) ?? "none") as GradeType;
+        return {
+          position: position as 1 | 2 | 3,
+          id: value,
+          grade,
+        };
+      });
+      const penaltyType = String(formData.get("penalty_type") ?? "none");
+      const penaltyTarget = String(formData.get("penalty_target") ?? "").trim();
+      const penaltyPointsRaw = String(formData.get("penalty_points") ?? "").trim();
+      const penaltyPoints = penaltyPointsRaw ? Math.abs(Number(penaltyPointsRaw)) : 0;
+      const penalty =
+        penaltyTarget && penaltyPoints > 0 && (penaltyType === "student" || penaltyType === "team")
+          ? {
+              id: penaltyTarget,
+              type: penaltyType,
+              points: penaltyPoints,
+            }
+          : null;
 
-    const penalties = parsePenaltyPayloads(formData);
-    await ensureRegisteredCandidates(programId, [
-      ...winners.map((winner) => winner.id),
-      ...penalties.map((penalty) => penalty.id),
-    ]);
-    await updatePendingResultEntries(result_id, winners, penalties);
-    redirect("/admin/pending-results");
+      const penalties = parsePenaltyPayloads(formData);
+      await ensureRegisteredCandidates(programId, [
+        ...winners.map((winner) => winner.id),
+        ...penalties.map((penalty) => penalty.id),
+      ]);
+      await updatePendingResultEntries(result_id, winners, penalties);
+      revalidatePath("/admin/pending-results");
+      redirectWithToast("/admin/pending-results", "Result updated successfully!", "success");
+    } catch (error: any) {
+      if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+        throw error;
+      }
+      revalidatePath("/admin/pending-results");
+      redirectWithToast(`/admin/pending-results/${result_id}/edit`, error?.message || "Failed to update result", "error");
+    }
   }
 
   return (

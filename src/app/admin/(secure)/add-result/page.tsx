@@ -5,6 +5,8 @@ import { getApprovedResults, getJuries, getPrograms, getStudents, getTeams } fro
 import { getProgramRegistrations } from "@/lib/team-data";
 import { ensureRegisteredCandidates } from "@/lib/registration-guard";
 import { submitResultToPending } from "@/lib/result-service";
+import { redirectWithToast } from "@/lib/actions";
+import { revalidatePath } from "next/cache";
 
 type PenaltyFormPayload = {
   id: string;
@@ -39,62 +41,76 @@ function parsePenaltyPayloads(formData: FormData): PenaltyFormPayload[] {
 
 async function submitResultAction(formData: FormData) {
   "use server";
-
-  const programId = String(formData.get("program_id") ?? "");
-  const juryId = String(formData.get("jury_id") ?? "");
-
-  const winners = ([
-    { key: "winner_1", gradeKey: "grade_1", position: 1 as const },
-    { key: "winner_2", gradeKey: "grade_2", position: 2 as const },
-    { key: "winner_3", gradeKey: "grade_3", position: 3 as const },
-  ] as const).map(({ key, gradeKey, position }) => {
-    const value = String(formData.get(key) ?? "");
-    if (!value) throw new Error("All placements are required");
-    return {
-      position,
-      id: value,
-      grade: String(formData.get(gradeKey) ?? "none") as
-        | "A"
-        | "B"
-        | "C"
-        | "none",
-    };
-  });
-
-  // Validate that all three positions have different candidates
-  const winnerIds = winners.map(w => w.id);
-  const uniqueWinnerIds = new Set(winnerIds);
-  if (uniqueWinnerIds.size !== 3) {
-    throw new Error("1st, 2nd, and 3rd place must have different candidates.");
-  }
-
-  const penalties = parsePenaltyPayloads(formData);
-
-  await ensureRegisteredCandidates(programId, [
-    ...winners.map((winner) => winner.id),
-    ...penalties.map((penalty) => penalty.id),
-  ]);
-
   try {
-    await submitResultToPending({
-      programId,
-      juryId,
-      winners,
-      penalties,
-    });
-  } catch (error: any) {
-    // Handle published program error
-    if (error.message?.includes("Program already published") || error.message?.includes("already published")) {
-      throw new Error("Program already published");
-    }
-    // Handle duplicate result submission error
-    if (error.message?.includes("already exists") || error.message?.includes("already been approved")) {
-      throw new Error(error.message);
-    }
-    throw new Error(`Failed to submit result: ${error.message}`);
-  }
+    const programId = String(formData.get("program_id") ?? "");
+    const juryId = String(formData.get("jury_id") ?? "");
 
-  redirect("/admin/pending-results");
+    // Collect winners and validate
+    const winners = [];
+    for (const { key, gradeKey, position } of [
+      { key: "winner_1", gradeKey: "grade_1", position: 1 as const },
+      { key: "winner_2", gradeKey: "grade_2", position: 2 as const },
+      { key: "winner_3", gradeKey: "grade_3", position: 3 as const },
+    ]) {
+      const value = String(formData.get(key) ?? "");
+      if (!value) {
+        redirectWithToast("/admin/add-result", "All placements are required", "error");
+        return;
+      }
+      winners.push({
+        position,
+        id: value,
+        grade: String(formData.get(gradeKey) ?? "none") as
+          | "A"
+          | "B"
+          | "C"
+          | "none",
+      });
+    }
+
+    // Validate that all three positions have different candidates
+    const winnerIds = winners.map(w => w.id);
+    const uniqueWinnerIds = new Set(winnerIds);
+    if (uniqueWinnerIds.size !== 3) {
+      redirectWithToast("/admin/add-result", "1st, 2nd, and 3rd place must have different candidates.", "error");
+      return;
+    }
+
+    const penalties = parsePenaltyPayloads(formData);
+
+    await ensureRegisteredCandidates(programId, [
+      ...winners.map((winner) => winner.id),
+      ...penalties.map((penalty) => penalty.id),
+    ]);
+
+    try {
+      await submitResultToPending({
+        programId,
+        juryId,
+        winners,
+        penalties,
+      });
+      revalidatePath("/admin/pending-results");
+      redirectWithToast("/admin/pending-results", "Result submitted successfully! Waiting for approval.", "success");
+    } catch (error: any) {
+      // Handle published program error
+      if (error.message?.includes("Program already published") || error.message?.includes("already published")) {
+        redirectWithToast("/admin/add-result", "Program already published", "error");
+        return;
+      }
+      // Handle duplicate result submission error
+      if (error.message?.includes("already exists") || error.message?.includes("already been approved")) {
+        redirectWithToast("/admin/add-result", error.message, "error");
+        return;
+      }
+      redirectWithToast("/admin/add-result", `Failed to submit result: ${error.message}`, "error");
+    }
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    redirectWithToast("/admin/add-result", error?.message || "Failed to submit result", "error");
+  }
 }
 
 export default async function AddResultPage() {

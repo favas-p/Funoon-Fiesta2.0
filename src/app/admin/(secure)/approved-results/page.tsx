@@ -8,12 +8,22 @@ import {
 } from "@/lib/data";
 import { deleteApprovedResult } from "@/lib/result-service";
 import { revalidatePath } from "next/cache";
+import { redirectWithToast } from "@/lib/actions";
 
 async function deleteApprovedResultAction(formData: FormData) {
   "use server";
-  const id = String(formData.get("id") ?? "");
-  await deleteApprovedResult(id);
-  revalidatePath("/admin/approved-results");
+  try {
+    const id = String(formData.get("id") ?? "");
+    await deleteApprovedResult(id);
+    revalidatePath("/admin/approved-results");
+    redirectWithToast("/admin/approved-results", "Result deleted successfully!", "error");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/approved-results");
+    redirectWithToast("/admin/approved-results", error?.message || "Failed to delete result", "error");
+  }
 }
 
 export default async function ApprovedResultsAdminPage() {

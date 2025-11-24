@@ -1,12 +1,21 @@
 "use client";
 
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 interface LoginState {
   error?: string;
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full" loading={pending}>
+      Sign in
+    </Button>
+  );
 }
 
 export function TeamLoginForm({
@@ -26,9 +35,7 @@ export function TeamLoginForm({
         <Input name="teamName" placeholder="Team name" required />
         <Input name="password" type="password" placeholder="Password" required />
         {state.error && <p className="text-sm text-red-400">{state.error}</p>}
-        <Button type="submit" className="w-full">
-          Sign in
-        </Button>
+        <SubmitButton />
       </form>
     </Card>
   );

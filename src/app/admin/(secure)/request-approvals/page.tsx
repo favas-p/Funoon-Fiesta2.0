@@ -11,31 +11,54 @@ import {
   rejectReplacementRequest,
 } from "@/lib/team-data";
 import { RequestApprovalsClient } from "@/components/request-approvals-client";
+import { redirectWithToast } from "@/lib/actions";
 
 async function approveRequestAction(formData: FormData) {
   "use server";
-  if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
+  try {
+    if (!(await isAdminAuthenticated())) {
+      redirect("/admin/login");
+    }
+    const requestId = String(formData.get("requestId") ?? "");
+    if (!requestId) {
+      revalidatePath("/admin/request-approvals");
+      redirectWithToast("/admin/request-approvals", "Request ID is required", "error");
+      return;
+    }
+    await approveReplacementRequest(requestId, "admin");
+    revalidatePath("/admin/request-approvals");
+    redirectWithToast("/admin/request-approvals", "Replacement request approved successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/request-approvals");
+    redirectWithToast("/admin/request-approvals", error?.message || "Failed to approve request", "error");
   }
-  const requestId = String(formData.get("requestId") ?? "");
-  if (!requestId) {
-    throw new Error("Request ID is required");
-  }
-  await approveReplacementRequest(requestId, "admin");
-  revalidatePath("/admin/request-approvals");
 }
 
 async function rejectRequestAction(formData: FormData) {
   "use server";
-  if (!(await isAdminAuthenticated())) {
-    redirect("/admin/login");
+  try {
+    if (!(await isAdminAuthenticated())) {
+      redirect("/admin/login");
+    }
+    const requestId = String(formData.get("requestId") ?? "");
+    if (!requestId) {
+      revalidatePath("/admin/request-approvals");
+      redirectWithToast("/admin/request-approvals", "Request ID is required", "error");
+      return;
+    }
+    await rejectReplacementRequest(requestId, "admin");
+    revalidatePath("/admin/request-approvals");
+    redirectWithToast("/admin/request-approvals", "Replacement request rejected successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/request-approvals");
+    redirectWithToast("/admin/request-approvals", error?.message || "Failed to reject request", "error");
   }
-  const requestId = String(formData.get("requestId") ?? "");
-  if (!requestId) {
-    throw new Error("Request ID is required");
-  }
-  await rejectReplacementRequest(requestId, "admin");
-  revalidatePath("/admin/request-approvals");
 }
 
 export default async function RequestApprovalsPage() {

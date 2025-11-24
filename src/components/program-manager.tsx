@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { CheckCircle2, LayoutList, Search, Trash2, Eye, Pencil } from "lucide-react";
+import { showSuccess, showError } from "@/lib/toast";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +49,44 @@ const pageSizeOptions = [
   { label: "10 / page", value: 10 },
   { label: "20 / page", value: 20 },
 ];
+
+// Submit button components that use form status
+function UpdateSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="flex-1" loading={pending}>
+      Save changes
+    </Button>
+  );
+}
+
+function DeleteSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant="danger" size="sm" className="gap-2" loading={pending}>
+      <Trash2 className="h-4 w-4" />
+      Delete
+    </Button>
+  );
+}
+
+function BulkAssignSubmitButton({ count }: { count: number }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full" disabled={count === 0} loading={pending}>
+      Assign {count} programs
+    </Button>
+  );
+}
+
+function BulkDeleteSubmitButton({ count }: { count: number }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant="danger" className="w-full" disabled={count === 0} loading={pending}>
+      Delete {count} program{count === 1 ? "" : "s"}
+    </Button>
+  );
+}
 
 export function ProgramManager({
   programs,
@@ -355,10 +395,7 @@ export function ProgramManager({
                   </Button>
                   <form action={deleteAction}>
                     <input type="hidden" name="id" value={program.id} />
-                    <Button type="submit" variant="danger" size="sm" className="gap-2">
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
+                    <DeleteSubmitButton />
                   </form>
                 </div>
               </div>
@@ -392,9 +429,7 @@ export function ProgramManager({
                     placeholder="Candidate limit"
                   />
                   <div className="flex items-center gap-3 md:col-span-2">
-                    <Button type="submit" className="flex-1">
-                      Save changes
-                    </Button>
+                    <UpdateSubmitButton />
                     <Button
                       type="button"
                       variant="secondary"
@@ -511,9 +546,7 @@ export function ProgramManager({
                 </option>
               ))}
             </Select>
-            <Button type="submit" className="w-full" disabled={!hasSelection}>
-              Assign {selected.size} programs
-            </Button>
+            <BulkAssignSubmitButton count={selected.size} />
           </form>
         )}
       </Modal>
@@ -534,9 +567,7 @@ export function ProgramManager({
         </p>
         <form action={bulkDeleteAction} className="space-y-4">
           <input type="hidden" name="program_ids" value={selectedIdsValue} />
-          <Button type="submit" variant="danger" className="w-full" disabled={!hasSelection}>
-            Delete {selected.size} program{selected.size === 1 ? "" : "s"}
-          </Button>
+          <BulkDeleteSubmitButton count={selected.size} />
         </form>
       </Modal>
     </div>

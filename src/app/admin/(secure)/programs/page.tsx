@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import {
 } from "@/lib/data";
 import { getProgramRegistrations, removeRegistrationsByProgram } from "@/lib/team-data";
 import { ProgramManager } from "@/components/program-manager";
+import { redirectWithToast } from "@/lib/actions";
 
 // Allow larger candidate limits so that big group/general programs can have many participants.
 // We keep a reasonable safety upper bound (e.g. 500) to avoid accidental huge numbers.
@@ -53,13 +55,21 @@ async function mutateProgram(
   formData: FormData,
   mode: "create" | "update",
 ) {
+  // Convert FormData values to strings, handling null/undefined
+  const idValue = formData.get("id");
+  const nameValue = formData.get("name");
+  const sectionValue = formData.get("section");
+  const stageValue = formData.get("stage");
+  const categoryValue = formData.get("category");
+  const candidateLimitValue = formData.get("candidateLimit") ?? formData.get("candidate_limit");
+
   const parsed = programSchema.safeParse({
-    id: formData.get("id"),
-    name: formData.get("name"),
-    section: formData.get("section"),
-    stage: formData.get("stage"),
-    category: formData.get("category"),
-    candidateLimit: formData.get("candidateLimit") ?? formData.get("candidate_limit"),
+    id: idValue ? String(idValue) : undefined,
+    name: nameValue ? String(nameValue).trim() : "",
+    section: sectionValue ? String(sectionValue) : "single",
+    stage: stageValue ? String(stageValue) : "true",
+    category: categoryValue ? String(categoryValue) : "A",
+    candidateLimit: candidateLimitValue ? String(candidateLimitValue) : "1",
   });
 
   if (!parsed.success) {
@@ -92,29 +102,34 @@ async function mutateProgram(
   revalidatePath("/admin/programs");
 }
 
-async function deleteProgramAction(formData: FormData) {
-  "use server";
-  const id = String(formData.get("id") ?? "");
-  await deleteProgramById(id);
-  await removeRegistrationsByProgram(id);
-  revalidatePath("/admin/programs");
-}
 
 async function bulkDeleteProgramsAction(formData: FormData) {
   "use server";
-  const ids = String(formData.get("program_ids") ?? "");
-  const programIds = ids
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  if (programIds.length === 0) {
-    throw new Error("No programs selected for deletion.");
+  try {
+    const ids = String(formData.get("program_ids") ?? "");
+    const programIds = ids
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (programIds.length === 0) {
+      revalidatePath("/admin/programs");
+      redirectWithToast("/admin/programs", "No programs selected for deletion.", "error");
+      return;
+    }
+    for (const programId of programIds) {
+      await deleteProgramById(programId);
+      await removeRegistrationsByProgram(programId);
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", `Successfully deleted ${programIds.length} program(s)!`, "error");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", error?.message || "Failed to delete programs", "error");
   }
-  for (const programId of programIds) {
-    await deleteProgramById(programId);
-    await removeRegistrationsByProgram(programId);
-  }
-  revalidatePath("/admin/programs");
 }
 
 const bulkAssignSchema = z.object({
@@ -133,56 +148,111 @@ const bulkAssignSchema = z.object({
 
 async function bulkAssignProgramsAction(formData: FormData) {
   "use server";
-  const parsed = bulkAssignSchema.safeParse({
-    program_ids: String(formData.get("program_ids") ?? ""),
-    jury_id: String(formData.get("jury_id") ?? ""),
-  });
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues.map((issue) => issue.message).join(", "));
-  }
-  const { program_ids, jury_id } = parsed.data;
-  const errors: string[] = [];
-  let successCount = 0;
-  
-  for (const programId of program_ids) {
-    try {
-      await assignProgramToJury(programId, jury_id);
-      successCount++;
-    } catch (error: any) {
-      // Collect errors but continue processing other assignments
-      if (error.message.includes("already assigned")) {
-        // Silently skip if already assigned (idempotent operation)
+  try {
+    const parsed = bulkAssignSchema.safeParse({
+      program_ids: String(formData.get("program_ids") ?? ""),
+      jury_id: String(formData.get("jury_id") ?? ""),
+    });
+    if (!parsed.success) {
+      revalidatePath("/admin/programs");
+      redirectWithToast("/admin/programs", parsed.error.issues.map((issue) => issue.message).join(", "), "error");
+      return;
+    }
+    const { program_ids, jury_id } = parsed.data;
+    const errors: string[] = [];
+    let successCount = 0;
+    
+    for (const programId of program_ids) {
+      try {
+        await assignProgramToJury(programId, jury_id);
         successCount++;
-      } else if (error.message.includes("already published")) {
-        // Skip approved programs with a clear error message
-        errors.push(`Program ${programId}: ${error.message}`);
-      } else {
-        errors.push(`Program ${programId}: ${error.message}`);
+      } catch (error: any) {
+        // Collect errors but continue processing other assignments
+        if (error.message.includes("already assigned")) {
+          // Silently skip if already assigned (idempotent operation)
+          successCount++;
+        } else if (error.message.includes("already published")) {
+          // Skip approved programs with a clear error message
+          errors.push(`Program ${programId}: ${error.message}`);
+        } else {
+          errors.push(`Program ${programId}: ${error.message}`);
+        }
       }
     }
+    
+    revalidatePath("/admin/assign");
+    revalidatePath("/admin/programs");
+    
+    if (errors.length > 0 && successCount === 0) {
+      redirectWithToast("/admin/programs", `All assignments failed: ${errors.join("; ")}`, "error");
+      return;
+    }
+    
+    if (errors.length > 0) {
+      // Partial success
+      redirectWithToast("/admin/programs", `Partially completed: ${successCount} assigned, ${errors.length} failed. ${errors.join("; ")}`, "warning");
+      return;
+    }
+    
+    redirectWithToast("/admin/programs", `Successfully assigned ${successCount} program(s)!`, "success");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", error?.message || "Failed to assign programs", "error");
   }
-  
-  if (errors.length > 0 && successCount === 0) {
-    throw new Error(`All assignments failed: ${errors.join("; ")}`);
-  }
-  
-  if (errors.length > 0) {
-    // Partial success - could show a warning, but for now just log
-    console.warn("Some assignments had issues:", errors);
-  }
-  
-  revalidatePath("/admin/assign");
-  revalidatePath("/admin/programs");
 }
 
 async function createProgramAction(formData: FormData) {
   "use server";
-  await mutateProgram(formData, "create");
+  try {
+    await mutateProgram(formData, "create");
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", "New program saved successfully", "success");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", error?.message || "Failed to create program", "error");
+  }
 }
 
 async function updateProgramAction(formData: FormData) {
   "use server";
-  await mutateProgram(formData, "update");
+  try {
+    await mutateProgram(formData, "update");
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", "Program updated successfully!", "success");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", error?.message || "Failed to update program", "error");
+  }
+}
+
+async function deleteProgramAction(formData: FormData) {
+  "use server";
+  try {
+    const id = String(formData.get("id") ?? "");
+    await deleteProgramById(id);
+    await removeRegistrationsByProgram(id);
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", "Program deleted successfully!", "error");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", error?.message || "Failed to delete program", "error");
+  }
 }
 
 function parseCsv(content: string) {
@@ -218,30 +288,48 @@ function parseCsv(content: string) {
 
 async function importProgramsAction(formData: FormData) {
   "use server";
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Please upload a CSV file.");
-  }
-  const text = await file.text();
-  const entries = parseCsv(text);
-  if (entries.length === 0) {
-    throw new Error("CSV file does not contain any data rows.");
-  }
-  for (const entry of entries) {
-    const parsed = csvRowSchema.safeParse(entry.data);
-    if (!parsed.success) {
-      const message = parsed.error.issues.map((issue) => issue.message).join(", ");
-      throw new Error(`Row ${entry.row}: ${message}`);
+  try {
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      revalidatePath("/admin/programs");
+      redirectWithToast("/admin/programs", "Please upload a CSV file.", "error");
+      return;
     }
-    await createProgram({
-      name: parsed.data.name,
-      section: parsed.data.section,
-      stage: parsed.data.stage,
-      category: parsed.data.category,
-      candidateLimit: parsed.data.candidate_limit,
-    });
+    const text = await file.text();
+    const entries = parseCsv(text);
+    if (entries.length === 0) {
+      revalidatePath("/admin/programs");
+      redirectWithToast("/admin/programs", "CSV file does not contain any data rows.", "error");
+      return;
+    }
+    let successCount = 0;
+    for (const entry of entries) {
+      const parsed = csvRowSchema.safeParse(entry.data);
+      if (!parsed.success) {
+        const message = parsed.error.issues.map((issue) => issue.message).join(", ");
+        revalidatePath("/admin/programs");
+        redirectWithToast("/admin/programs", `Row ${entry.row}: ${message}`, "error");
+        return;
+      }
+      await createProgram({
+        name: parsed.data.name,
+        section: parsed.data.section,
+        stage: parsed.data.stage,
+        category: parsed.data.category,
+        candidateLimit: parsed.data.candidate_limit,
+      });
+      successCount++;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", `Successfully imported ${successCount} program(s)!`, "success");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/programs");
+    redirectWithToast("/admin/programs", error?.message || "Failed to import programs", "error");
   }
-  revalidatePath("/admin/programs");
 }
 
 export default async function ProgramsPage() {

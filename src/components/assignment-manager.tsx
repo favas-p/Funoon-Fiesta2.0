@@ -508,12 +508,34 @@ export function AssignmentManager({
               onClick={async () => {
                 if (!deleteTarget) return;
                 setIsDeleting(true);
-                const formData = new FormData();
-                formData.append("program_id", deleteTarget.programId);
-                formData.append("jury_id", deleteTarget.juryId);
-                await deleteAction(formData);
-                setIsDeleting(false);
-                setDeleteTarget(null);
+                
+                // Set a timeout fallback to reset state if redirect doesn't happen quickly
+                const timeoutId = setTimeout(() => {
+                  setIsDeleting(false);
+                  setDeleteTarget(null);
+                }, 2000);
+                
+                try {
+                  const formData = new FormData();
+                  formData.append("program_id", deleteTarget.programId);
+                  formData.append("jury_id", deleteTarget.juryId);
+                  await deleteAction(formData);
+                  clearTimeout(timeoutId);
+                  // If we reach here, redirect didn't happen, reset state
+                  setIsDeleting(false);
+                  setDeleteTarget(null);
+                } catch (error: any) {
+                  clearTimeout(timeoutId);
+                  // Handle redirect - Next.js redirects throw a special error
+                  if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+                    // Redirect is happening, reset state immediately
+                    setIsDeleting(false);
+                    setDeleteTarget(null);
+                  } else {
+                    // Other errors - reset state
+                    setIsDeleting(false);
+                  }
+                }
               }}
               disabled={isDeleting}
             >

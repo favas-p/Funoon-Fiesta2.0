@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { ReplacementRequest } from "@/lib/types";
+import { showSuccess, showError } from "@/lib/toast";
 
 interface RequestApprovalsClientProps {
   pendingRequests: ReplacementRequest[];
@@ -108,9 +109,10 @@ export function RequestApprovalsClient({
       formData.append("requestId", requestId);
       try {
         await approveAction(formData);
+        showSuccess("Replacement request approved successfully!");
         window.location.reload();
       } catch (error) {
-        alert(error instanceof Error ? error.message : "Failed to approve request");
+        showError(error instanceof Error ? error.message : "Failed to approve request");
         setProcessing((prev) => {
           const next = new Set(prev);
           next.delete(requestId);
@@ -127,9 +129,10 @@ export function RequestApprovalsClient({
       formData.append("requestId", requestId);
       try {
         await rejectAction(formData);
+        showSuccess("Replacement request rejected successfully!");
         window.location.reload();
       } catch (error) {
-        alert(error instanceof Error ? error.message : "Failed to reject request");
+        showError(error instanceof Error ? error.message : "Failed to reject request");
         setProcessing((prev) => {
           const next = new Set(prev);
           next.delete(requestId);

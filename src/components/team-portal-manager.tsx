@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { Search, Users, UserCheck, FileText, Trash2, Pencil, Eye, TrendingUp, LayoutGrid, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,26 @@ interface TeamPortalManagerProps {
   deleteAction: (formData: FormData) => Promise<void>;
 }
 
+// Submit button component that uses form status
+function SubmitButton({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" className="w-full" loading={pending} onClick={onClick}>
+      {children}
+    </Button>
+  );
+}
+
+// Delete button component that uses form status
+function DeleteButton({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant="danger" className="flex-1" loading={pending}>
+      {children}
+    </Button>
+  );
+}
+
 export function TeamPortalManager({
   teams,
   students,
@@ -46,6 +67,7 @@ export function TeamPortalManager({
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [registrationGroupBy, setRegistrationGroupBy] = useState<"all" | "program" | "team">("all");
   const [registrationTeamFilter, setRegistrationTeamFilter] = useState<string>("");
+  const [isPending, startTransition] = useTransition();
 
   const filteredTeams = useMemo(() => {
     if (!activeView || activeView !== "teams") return [];
@@ -604,9 +626,15 @@ export function TeamPortalManager({
                 placeholder="#0ea5e9"
               />
             </div>
-            <Button type="submit" className="w-full" onClick={() => setEditingTeam(null)}>
+            <SubmitButton
+              onClick={() => {
+                startTransition(() => {
+                  setTimeout(() => setEditingTeam(null), 100);
+                });
+              }}
+            >
               Save Changes
-            </Button>
+            </SubmitButton>
           </form>
         )}
       </Modal>
@@ -708,16 +736,11 @@ export function TeamPortalManager({
                   variant="secondary"
                   className="flex-1"
                   onClick={() => setDeleteConfirm(null)}
+                  disabled={isPending}
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  variant="danger"
-                  className="flex-1"
-                >
-                  Delete Team
-                </Button>
+                <DeleteButton>Delete Team</DeleteButton>
               </div>
             </form>
           </div>

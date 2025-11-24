@@ -11,6 +11,7 @@ import {
   updateJuryById,
 } from "@/lib/data";
 import { JuryCardWrapper } from "@/components/jury-card-wrapper";
+import { redirectWithToast } from "@/lib/actions";
 
 const jurySchema = z.object({
   id: z.string().optional(),
@@ -47,19 +48,48 @@ async function upsertJury(formData: FormData, mode: "create" | "update") {
 
 async function deleteJuryAction(formData: FormData) {
   "use server";
-  const id = String(formData.get("id") ?? "");
-  await deleteJuryById(id);
-  revalidatePath("/admin/jury");
+  try {
+    const id = String(formData.get("id") ?? "");
+    await deleteJuryById(id);
+    revalidatePath("/admin/jury");
+    redirectWithToast("/admin/jury", "Jury member deleted successfully!", "error");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/jury");
+    redirectWithToast("/admin/jury", error?.message || "Failed to delete jury member", "error");
+  }
 }
 
 async function createJuryAction(formData: FormData) {
   "use server";
-  await upsertJury(formData, "create");
+  try {
+    await upsertJury(formData, "create");
+    revalidatePath("/admin/jury");
+    redirectWithToast("/admin/jury", "Jury member created successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/jury");
+    redirectWithToast("/admin/jury", error?.message || "Failed to create jury member", "error");
+  }
 }
 
 async function updateJuryAction(formData: FormData) {
   "use server";
-  await upsertJury(formData, "update");
+  try {
+    await upsertJury(formData, "update");
+    revalidatePath("/admin/jury");
+    redirectWithToast("/admin/jury", "Jury member updated successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/jury");
+    redirectWithToast("/admin/jury", error?.message || "Failed to update jury member", "error");
+  }
 }
 
 export default async function JuryManagementPage() {

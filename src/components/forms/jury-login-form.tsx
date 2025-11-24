@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -12,6 +13,15 @@ interface JuryLoginFormProps {
 }
 
 const initialState = { error: undefined as string | undefined };
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" fullWidth loading={pending}>
+      Enter Jury Portal
+    </Button>
+  );
+}
 
 export function JuryLoginForm({ action }: JuryLoginFormProps) {
   const [state, formAction] = useActionState(action, initialState);
@@ -45,9 +55,7 @@ export function JuryLoginForm({ action }: JuryLoginFormProps) {
       {state.error && (
         <p className="text-sm text-rose-400">{state.error}</p>
       )}
-      <Button type="submit" fullWidth>
-        Enter Jury Portal
-      </Button>
+      <SubmitButton />
     </form>
   );
 }

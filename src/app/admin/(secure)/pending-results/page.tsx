@@ -8,19 +8,38 @@ import {
 } from "@/lib/data";
 import { approveResult, rejectResult } from "@/lib/result-service";
 import { revalidatePath } from "next/cache";
+import { redirectWithToast } from "@/lib/actions";
 
 async function approveResultAction(formData: FormData) {
   "use server";
-  const id = String(formData.get("id") ?? "");
-  await approveResult(id);
-  revalidatePath("/admin/pending-results");
+  try {
+    const id = String(formData.get("id") ?? "");
+    await approveResult(id);
+    revalidatePath("/admin/pending-results");
+    redirectWithToast("/admin/pending-results", "Result approved successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/pending-results");
+    redirectWithToast("/admin/pending-results", error?.message || "Failed to approve result", "error");
+  }
 }
 
 async function rejectResultAction(formData: FormData) {
   "use server";
-  const id = String(formData.get("id") ?? "");
-  await rejectResult(id);
-  revalidatePath("/admin/pending-results");
+  try {
+    const id = String(formData.get("id") ?? "");
+    await rejectResult(id);
+    revalidatePath("/admin/pending-results");
+    redirectWithToast("/admin/pending-results", "Result rejected successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/pending-results");
+    redirectWithToast("/admin/pending-results", error?.message || "Failed to reject result", "error");
+  }
 }
 
 export default async function PendingResultsPage() {

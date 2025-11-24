@@ -14,6 +14,7 @@ import {
   updateStudentById,
 } from "@/lib/data";
 import { getProgramRegistrations } from "@/lib/team-data";
+import { redirectWithToast } from "@/lib/actions";
 
 function generateNextChestNumber(teamName: string, existingStudents: Array<{ chest_no: string }>): string {
   const prefix = teamName.slice(0, 2).toUpperCase();
@@ -106,34 +107,74 @@ async function upsertStudent(formData: FormData, mode: "create" | "update") {
 
 async function deleteStudentAction(formData: FormData) {
   "use server";
-  const id = String(formData.get("id") ?? "");
-  await deleteStudentById(id);
-  revalidatePath("/admin/students");
+  try {
+    const id = String(formData.get("id") ?? "");
+    await deleteStudentById(id);
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", "Student deleted successfully!", "error");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", error?.message || "Failed to delete student", "error");
+  }
 }
 
 async function bulkDeleteStudentsAction(formData: FormData) {
   "use server";
-  const ids = String(formData.get("student_ids") ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  if (ids.length === 0) {
-    throw new Error("No students selected for deletion.");
+  try {
+    const ids = String(formData.get("student_ids") ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (ids.length === 0) {
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", "No students selected for deletion.", "error");
+      return;
+    }
+    for (const id of ids) {
+      await deleteStudentById(id);
+    }
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", `Successfully deleted ${ids.length} student(s)!`, "error");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", error?.message || "Failed to delete students", "error");
   }
-  for (const id of ids) {
-    await deleteStudentById(id);
-  }
-  revalidatePath("/admin/students");
 }
 
 async function createStudentAction(formData: FormData) {
   "use server";
-  await upsertStudent(formData, "create");
+  try {
+    await upsertStudent(formData, "create");
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", "Student created successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", error?.message || "Failed to create student", "error");
+  }
 }
 
 async function updateStudentAction(formData: FormData) {
   "use server";
-  await upsertStudent(formData, "update");
+  try {
+    await upsertStudent(formData, "update");
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", "Student updated successfully!", "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", error?.message || "Failed to update student", "error");
+  }
 }
 
 function parseStudentCsv(content: string) {
@@ -179,15 +220,20 @@ function parseStudentCsv(content: string) {
 
 async function importStudentsAction(formData: FormData) {
   "use server";
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Please upload a CSV file.");
-  }
-  const text = await file.text();
-  const entries = parseStudentCsv(text);
-  if (entries.length === 0) {
-    throw new Error("CSV file does not contain any data rows.");
-  }
+  try {
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", "Please upload a CSV file.", "error");
+      return;
+    }
+    const text = await file.text();
+    const entries = parseStudentCsv(text);
+    if (entries.length === 0) {
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", "CSV file does not contain any data rows.", "error");
+      return;
+    }
   const teams = await getTeams();
   const teamIds = new Set(teams.map((team) => team.id));
   const teamNameToId = new Map(teams.map((team) => [team.name.toUpperCase(), team.id]));
@@ -210,7 +256,9 @@ async function importStudentsAction(formData: FormData) {
     const parsed = csvStudentSchema.safeParse(entry.data);
     if (!parsed.success) {
       const message = parsed.error.issues.map((issue) => issue.message).join(", ");
-      throw new Error(`Row ${entry.row}: ${message}`);
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", `Row ${entry.row}: ${message}`, "error");
+      return;
     }
     
     // Resolve team_id: check if provided value is a valid team_id, otherwise treat as team_name
@@ -233,14 +281,16 @@ async function importStudentsAction(formData: FormData) {
     
     if (!resolvedTeamId) {
       const providedValue = parsed.data.team_id || parsed.data.team_name || "";
-      throw new Error(
-        `Row ${entry.row}: Team "${providedValue}" not found. Available teams: ${Array.from(teamNameToId.keys()).join(", ")}`
-      );
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", `Row ${entry.row}: Team "${providedValue}" not found. Available teams: ${Array.from(teamNameToId.keys()).join(", ")}`, "error");
+      return;
     }
     
     const team = teams.find((t) => t.id === resolvedTeamId);
     if (!team) {
-      throw new Error(`Row ${entry.row}: Team not found`);
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", `Row ${entry.row}: Team not found`, "error");
+      return;
     }
     
     // Generate or use provided chest number, normalized to uppercase
@@ -249,16 +299,16 @@ async function importStudentsAction(formData: FormData) {
     // Check for duplicate chest number in existing database
     if (existingChestNumbers.has(chest_no)) {
       const existingStudent = existingStudents.find((s) => s.chest_no.toUpperCase() === chest_no);
-      throw new Error(
-        `Row ${entry.row}: Chest number "${chest_no}" already exists in database (assigned to "${existingStudent?.name || "unknown student"}").`
-      );
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", `Row ${entry.row}: Chest number "${chest_no}" already exists in database (assigned to "${existingStudent?.name || "unknown student"}").`, "error");
+      return;
     }
     
     // Check for duplicate chest number within this import batch
     if (importBatchChestNumbers.has(chest_no)) {
-      throw new Error(
-        `Row ${entry.row}: Chest number "${chest_no}" is duplicated within this CSV file. Each chest number must be unique.`
-      );
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", `Row ${entry.row}: Chest number "${chest_no}" is duplicated within this CSV file. Each chest number must be unique.`, "error");
+      return;
     }
     
     // Add to batch tracking
@@ -276,12 +326,30 @@ async function importStudentsAction(formData: FormData) {
     } catch (error: any) {
       // Provide user-friendly error message
       if (error.message.includes("Chest number")) {
-        throw new Error(`Row ${entry.row}: ${error.message}`);
+        revalidatePath("/admin/students");
+        redirectWithToast("/admin/students", `Row ${entry.row}: ${error.message}`, "error");
+        return;
       }
-      throw new Error(`Row ${entry.row}: Failed to create student - ${error.message}`);
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", `Row ${entry.row}: Failed to create student - ${error.message}`, "error");
+      return;
     }
   }
   revalidatePath("/admin/students");
+  redirectWithToast("/admin/students", `Successfully imported ${importBatchChestNumbers.size} student(s)!`, "success");
+  } catch (error: any) {
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    // Handle CSV parsing errors
+    if (error.message.includes("Missing") || error.message.includes("incomplete") || error.message.includes("Row")) {
+      revalidatePath("/admin/students");
+      redirectWithToast("/admin/students", error.message, "error");
+      return;
+    }
+    revalidatePath("/admin/students");
+    redirectWithToast("/admin/students", error?.message || "Failed to import students", "error");
+  }
 }
 
 export default async function StudentsPage() {
@@ -362,4 +430,5 @@ export default async function StudentsPage() {
     </div>
   );
 }
+
 

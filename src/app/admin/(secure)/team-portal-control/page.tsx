@@ -5,6 +5,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getPortalStudents, getPortalTeams, getProgramRegistrations, getRegistrationSchedule, savePortalTeam, deletePortalTeam, updateRegistrationSchedule } from "@/lib/team-data";
 import { TeamPortalManager } from "@/components/team-portal-manager";
+import { redirectWithToast } from "@/lib/actions";
 
 function sanitizeColor(value: string) {
   return /^#([0-9A-F]{3}){1,2}$/i.test(value) ? value : "#0ea5e9";
@@ -12,46 +13,83 @@ function sanitizeColor(value: string) {
 
 async function upsertTeamAction(formData: FormData) {
   "use server";
-  const id = String(formData.get("id") ?? `team-${randomUUID().slice(0, 6)}`);
-  const teamName = String(formData.get("teamName") ?? "").trim();
-  const password = String(formData.get("password") ?? "").trim();
-  const leaderName = String(formData.get("leaderName") ?? "").trim();
-  const themeColor = sanitizeColor(String(formData.get("themeColor") ?? "#0ea5e9"));
-  if (!teamName || !password || !leaderName) {
-    throw new Error("Team name, password, and leader name are required.");
+  try {
+    const id = String(formData.get("id") ?? `team-${randomUUID().slice(0, 6)}`);
+    const teamName = String(formData.get("teamName") ?? "").trim();
+    const password = String(formData.get("password") ?? "").trim();
+    const leaderName = String(formData.get("leaderName") ?? "").trim();
+    const themeColor = sanitizeColor(String(formData.get("themeColor") ?? "#0ea5e9"));
+    if (!teamName || !password || !leaderName) {
+      revalidatePath("/admin/team-portal-control");
+      redirectWithToast("/admin/team-portal-control", "Team name, password, and leader name are required.", "error");
+      return;
+    }
+    const isUpdate = formData.get("id") !== null;
+    await savePortalTeam({
+      id,
+      teamName,
+      password,
+      leaderName,
+      themeColor,
+    });
+    revalidatePath("/admin/team-portal-control");
+    redirectWithToast("/admin/team-portal-control", isUpdate ? "Team updated successfully!" : "Team created successfully!", "success");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/team-portal-control");
+    redirectWithToast("/admin/team-portal-control", error?.message || "Failed to save team", "error");
   }
-  await savePortalTeam({
-    id,
-    teamName,
-    password,
-    leaderName,
-    themeColor,
-  });
-  revalidatePath("/admin/team-portal-control");
 }
 
 async function deleteTeamAction(formData: FormData) {
   "use server";
-  const teamId = String(formData.get("teamId") ?? "");
-  if (!teamId) {
-    throw new Error("Team ID missing");
+  try {
+    const teamId = String(formData.get("teamId") ?? "");
+    if (!teamId) {
+      revalidatePath("/admin/team-portal-control");
+      redirectWithToast("/admin/team-portal-control", "Team ID missing", "error");
+      return;
+    }
+    await deletePortalTeam(teamId);
+    revalidatePath("/admin/team-portal-control");
+    redirectWithToast("/admin/team-portal-control", "Team deleted successfully!", "error");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/team-portal-control");
+    redirectWithToast("/admin/team-portal-control", error?.message || "Failed to delete team", "error");
   }
-  await deletePortalTeam(teamId);
-  revalidatePath("/admin/team-portal-control");
 }
 
 async function updateScheduleAction(formData: FormData) {
   "use server";
-  const start = String(formData.get("startDateTime") ?? "");
-  const end = String(formData.get("endDateTime") ?? "");
-  if (!start || !end) {
-    throw new Error("Start and end date/time are required.");
+  try {
+    const start = String(formData.get("startDateTime") ?? "");
+    const end = String(formData.get("endDateTime") ?? "");
+    if (!start || !end) {
+      revalidatePath("/admin/team-portal-control");
+      redirectWithToast("/admin/team-portal-control", "Start and end date/time are required.", "error");
+      return;
+    }
+    await updateRegistrationSchedule({
+      startDateTime: new Date(start).toISOString(),
+      endDateTime: new Date(end).toISOString(),
+    });
+    revalidatePath("/admin/team-portal-control");
+    redirectWithToast("/admin/team-portal-control", "Registration schedule updated successfully!", "success");
+  } catch (error: any) {
+    // Check if it's a redirect error - if so, re-throw it
+    if (error?.digest === "NEXT_REDIRECT" || error?.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+    revalidatePath("/admin/team-portal-control");
+    redirectWithToast("/admin/team-portal-control", error?.message || "Failed to update schedule", "error");
   }
-  await updateRegistrationSchedule({
-    startDateTime: new Date(start).toISOString(),
-    endDateTime: new Date(end).toISOString(),
-  });
-  revalidatePath("/admin/team-portal-control");
 }
 
 export default async function TeamPortalControlPage() {
