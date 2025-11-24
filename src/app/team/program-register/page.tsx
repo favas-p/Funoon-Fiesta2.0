@@ -212,8 +212,9 @@ async function removeRegistrationAction(formData: FormData) {
 export default async function ProgramRegisterPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const params = await searchParams;
   const team = await getCurrentTeam();
   if (!team) redirect("/team/login");
   const [programs, registrations, students, open] = await Promise.all([
@@ -226,8 +227,8 @@ export default async function ProgramRegisterPage({
     (registration) => registration.teamId === team.id,
   );
   const teamStudents = students.filter((student) => student.teamId === team.id);
-  const error = typeof searchParams?.error === "string" ? searchParams.error : undefined;
-  const success = typeof searchParams?.success === "string" ? searchParams.success : undefined;
+  const error = typeof params?.error === "string" ? params.error : undefined;
+  const success = typeof params?.success === "string" ? params.success : undefined;
 
   return (
     <div className="space-y-6 text-white">

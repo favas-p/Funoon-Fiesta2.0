@@ -138,8 +138,9 @@ async function submitReplacementRequestAction(formData: FormData) {
 export default async function ReplacementRequestPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const params = await searchParams;
   const team = await getCurrentTeam();
   if (!team) redirect("/team/login");
 
@@ -158,8 +159,8 @@ export default async function ReplacementRequestPage({
   const teamRegistrations = registrations.filter((r) => r.teamId === team.id);
   const teamStudents = students.filter((s) => s.teamId === team.id);
 
-  const error = typeof searchParams?.error === "string" ? searchParams.error : undefined;
-  const success = typeof searchParams?.success === "string" ? searchParams.success : undefined;
+  const error = typeof params?.error === "string" ? params.error : undefined;
+  const success = typeof params?.success === "string" ? params.success : undefined;
 
   return (
     <div className="space-y-6 text-white">
