@@ -5,6 +5,16 @@ import Link from "next/link";
 import { Activity, Medal } from "lucide-react";
 import type { Team } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 interface LiveScorePulseProps {
   teams: Team[];
@@ -12,36 +22,42 @@ interface LiveScorePulseProps {
 }
 
 // Team color mappings
-const TEAM_COLORS: Record<string, { primary: string; gradient: string; light: string }> = {
+const TEAM_COLORS: Record<string, { primary: string; gradient: string; light: string; stroke: string }> = {
   SAMARQAND: {
     primary: "#D72638",
     gradient: "from-[#D72638] to-[#B01E2E]",
     light: "#FEE2E2",
+    stroke: "#9F1221",
   },
   NAHAVAND: {
     primary: "#1E3A8A",
     gradient: "from-[#1E3A8A] to-[#172554]",
     light: "#DBEAFE",
+    stroke: "#172554",
   },
   YAMAMA: {
     primary: "#7C3AED",
     gradient: "from-[#7C3AED] to-[#6D28D9]",
     light: "#EDE9FE",
+    stroke: "#5B21B6",
   },
   QURTUBA: {
     primary: "#FACC15",
     gradient: "from-[#FACC15] to-[#EAB308]",
     light: "#FEF9C3",
+    stroke: "#CA8A04",
   },
   MUQADDAS: {
     primary: "#059669",
     gradient: "from-[#059669] to-[#047857]",
     light: "#D1FAE5",
+    stroke: "#065F46",
   },
   BUKHARA: {
     primary: "#FB923C",
     gradient: "from-[#FB923C] to-[#F97316]",
     light: "#FFEDD5",
+    stroke: "#C2410C",
   },
 };
 
@@ -76,29 +92,28 @@ function TeamCard({ team, index, maxPoints }: TeamCardProps) {
       className="relative group"
     >
       <div
-        className={`bg-gradient-to-br ${team.colors.gradient} rounded-2xl shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl transform-gpu p-[3px] ${
-          isTopThree ? 'ring-2 ring-offset-2 ring-offset-[#fffcf5]' : ''
-        }`}
-        style={isTopThree ? { 
+        className={`bg-gradient-to-br ${team.colors.gradient} rounded-2xl shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl transform-gpu p-[3px] ${isTopThree ? 'ring-2 ring-offset-2 ring-offset-[#fffcf5]' : ''
+          }`}
+        style={isTopThree ? {
           boxShadow: `0 0 0 2px ${getMedalColor(index)}40, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)`
         } as React.CSSProperties : {}}
       >
-        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 backdrop-blur-sm relative overflow-hidden">
+        <div className="bg-white rounded-2xl p-3 sm:p-4 md:p-5 backdrop-blur-sm relative overflow-hidden">
           {/* Decorative gradient overlay */}
-          <div 
+          <div
             className="absolute top-0 right-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 opacity-5 rounded-full blur-3xl"
             style={{ backgroundColor: team.colors.primary }}
           />
-          
+
           <div className="relative z-10">
             <div className="flex items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
               <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                 <div
-                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center rounded-lg sm:rounded-xl md:rounded-2xl font-bold text-lg sm:text-xl md:text-2xl shadow-md sm:shadow-lg transition-transform group-hover:scale-110 shrink-0"
-                  style={{ 
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center rounded-xl sm:rounded-2xl font-bold text-lg sm:text-xl md:text-2xl shadow-md sm:shadow-lg transition-transform group-hover:scale-110 shrink-0"
+                  style={{
                     backgroundColor: team.colors.light,
                     border: `2px solid ${team.colors.primary}20`,
-                    borderRadius: '0.75rem'
+                    borderRadius: '1rem'
                   }}
                 >
                   <span style={{ color: team.colors.primary }}>{team.name.charAt(0)}</span>
@@ -130,7 +145,7 @@ function TeamCard({ team, index, maxPoints }: TeamCardProps) {
                 <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1">points</p>
               </div>
             </div>
-            
+
             <div className="space-y-1.5 sm:space-y-2">
               <div className="w-full bg-gray-100 rounded-full h-2.5 sm:h-3 md:h-3.5 overflow-hidden shadow-inner">
                 <motion.div
@@ -138,7 +153,7 @@ function TeamCard({ team, index, maxPoints }: TeamCardProps) {
                   animate={{ width: `${percentage}%` }}
                   transition={{ duration: 0.8, delay: index * 0.1 + 0.3, ease: "easeOut" }}
                   className="h-full rounded-full transition-all duration-500 shadow-sm relative overflow-hidden"
-                  style={{ 
+                  style={{
                     backgroundColor: team.colors.primary,
                     borderRadius: '9999px'
                   }}
@@ -162,62 +177,95 @@ function TeamCard({ team, index, maxPoints }: TeamCardProps) {
   );
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-xl border border-gray-100">
+        <p className="font-bold text-gray-900">{data.name}</p>
+        <p className="text-sm font-semibold" style={{ color: data.colors.primary }}>
+          {formatNumber(data.totalPoints)} points
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface DistributionChartProps {
-  teams: Array<Team & { totalPoints: number; colors: { primary: string } }>;
+  teams: Array<Team & { totalPoints: number; colors: { primary: string; stroke: string } }>;
 }
 
-function DistributionChart({ teams }: DistributionChartProps) {
-  const maxPoints = Math.max(...teams.map((team) => team.totalPoints), 1);
-
+function DesktopDistributionChart({ teams }: DistributionChartProps) {
   return (
-    <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 shadow-xl h-[280px] sm:h-[320px] md:h-[380px] lg:h-auto flex flex-col">
-      <div className="mb-3 sm:mb-4 md:mb-6">
-        <h4 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1">Points Distribution</h4>
-        <p className="text-xs text-gray-500">Visual comparison of team scores</p>
+    <div className="hidden md:flex flex-col h-full min-h-[400px] p-6 rounded-3xl bg-white border border-gray-100 shadow-xl">
+      <div className="mb-6">
+        <h4 className="text-lg font-bold text-gray-900">Points Distribution</h4>
+        <p className="text-sm text-gray-500">Comparative analysis of team performance</p>
       </div>
-      <div className="relative flex-1 min-h-[180px] sm:min-h-[220px] md:min-h-[260px] flex items-end justify-between gap-1.5 sm:gap-2 md:gap-3">
-        {teams.map((team, index) => {
-          const height = maxPoints > 0 ? (team.totalPoints / maxPoints) * 100 : 0;
-          return (
-            <motion.div
-              key={team.id}
-              initial={{ height: 0 }}
-              animate={{ height: `${height}%` }}
-              transition={{ duration: 0.8, delay: index * 0.1 + 0.4, ease: "easeOut" }}
-              className="relative flex-1 group flex flex-col items-center min-w-0"
-            >
-              <div
-                className="absolute bottom-0 left-0 right-0 rounded-t-xl sm:rounded-t-2xl transition-all duration-300 hover:opacity-100 hover:scale-105 shadow-md sm:shadow-lg"
-                style={{
-                  backgroundColor: team.colors.primary,
-                  opacity: 0.85,
-                  height: "100%",
-                  borderTopLeftRadius: '0.75rem',
-                  borderTopRightRadius: '0.75rem',
-                }}
-              >
-                {/* Tooltip - hidden on mobile, shown on hover for desktop */}
-                <div className="hidden md:block absolute -top-12 sm:-top-14 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-2xl z-10 border border-gray-700">
-                  <div className="font-bold text-xs sm:text-sm">{team.name}</div>
-                  <div className="text-white/80 text-xs mt-0.5">{formatNumber(team.totalPoints)} pts</div>
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-                {/* Value label on bar - always visible */}
-                <div className="absolute -top-6 sm:-top-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                  <span className="text-[10px] sm:text-xs font-bold text-white drop-shadow-lg bg-black/30 px-1.5 sm:px-2 py-0.5 rounded">
-                    {formatNumber(team.totalPoints)}
-                  </span>
-                </div>
-              </div>
-              {/* Team name label */}
-              <div className="absolute -bottom-5 sm:-bottom-6 left-1/2 transform -translate-x-1/2 text-center w-full px-0.5">
-                <span className="text-[10px] sm:text-xs font-bold text-gray-700 truncate block">
-                  {team.name.slice(0, 4)}
-                </span>
-              </div>
-            </motion.div>
-          );
-        })}
+      <div className="flex-1 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={teams} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#6B7280', fontSize: 12, fontWeight: 600 }}
+              dy={10}
+              tickFormatter={(value) => value.slice(0, 3).toUpperCase()}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              dx={-10}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
+            <Bar dataKey="totalPoints" radius={[8, 8, 0, 0]} animationDuration={1500}>
+              {teams.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.colors.primary} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function MobileDistributionChart({ teams }: DistributionChartProps) {
+  return (
+    <div className="md:hidden flex flex-col h-[350px] p-4 rounded-3xl bg-white border border-gray-100 shadow-lg">
+      <div className="mb-4">
+        <h4 className="text-base font-bold text-gray-900">Points Distribution</h4>
+        <p className="text-xs text-gray-500">Team performance overview</p>
+      </div>
+      <div className="flex-1 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={teams}
+            layout="vertical"
+            margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+            <XAxis type="number" hide />
+            <YAxis
+              dataKey="name"
+              type="category"
+              axisLine={false}
+              tickLine={false}
+              width={80}
+              tick={{ fill: '#4B5563', fontSize: 11, fontWeight: 600 }}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
+            <Bar dataKey="totalPoints" radius={[0, 10, 10, 0]} barSize={20} animationDuration={1500}>
+              {teams.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.colors.primary} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
@@ -230,6 +278,7 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
       primary: "#6B7280",
       gradient: "from-gray-500 to-gray-600",
       light: "#F9FAFB",
+      stroke: "#4B5563",
     };
     return { ...team, totalPoints, colors };
   });
@@ -277,9 +326,10 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
           </div>
         </div>
 
-        {/* Distribution Chart */}
+        {/* Distribution Charts */}
         <div className="order-1 lg:order-2">
-          <DistributionChart teams={sortedTeams} />
+          <DesktopDistributionChart teams={sortedTeams} />
+          <MobileDistributionChart teams={sortedTeams} />
         </div>
       </div>
 
@@ -318,4 +368,3 @@ export function LiveScorePulse({ teams, liveScores }: LiveScorePulseProps) {
     </section>
   );
 }
-
