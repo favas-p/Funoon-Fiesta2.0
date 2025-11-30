@@ -50,13 +50,13 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
   if (!data.program) {
     return (
       <main className="mx-auto max-w-5xl space-y-12 px-5 py-16 md:px-8">
-        <Card>
-          <CardTitle>Program not found</CardTitle>
-          <CardDescription className="mt-2">
+        <Card className="bg-white border-gray-200 shadow-md">
+          <CardTitle className="text-gray-900">Program not found</CardTitle>
+          <CardDescription className="mt-2 text-gray-600">
             The program you&apos;re looking for doesn&apos;t exist or has no results yet.
           </CardDescription>
           <Link href="/results" className="mt-6 inline-block">
-            <Button variant="secondary">Back to Results</Button>
+            <Button variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300">Back to Results</Button>
           </Link>
         </Card>
       </main>
@@ -66,13 +66,13 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
   if (!data.result) {
     return (
       <main className="mx-auto max-w-5xl space-y-12 px-5 py-16 md:px-8">
-        <Link href="/results" className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-6">
+        <Link href="/results" className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors mb-6">
           <ArrowLeft className="w-4 h-4" />
           Back to Results
         </Link>
-        <Card>
-          <CardTitle>{data.program.name}</CardTitle>
-          <CardDescription className="mt-2">
+        <Card className="bg-white border-gray-200 shadow-md">
+          <CardTitle className="text-gray-900">{data.program.name}</CardTitle>
+          <CardDescription className="mt-2 text-gray-600">
             No approved results available for this program yet.
           </CardDescription>
         </Card>
@@ -86,7 +86,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
     <main className="mx-auto max-w-5xl space-y-12 px-5 py-16 md:px-8">
       <Link
         href="/results"
-        className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Results
@@ -96,19 +96,19 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Trophy className="w-8 h-8 text-yellow-400" />
-              <h1 className="text-4xl font-bold text-white">{data.program.name}</h1>
+              <Trophy className="w-8 h-8 text-yellow-600" />
+              <h1 className="text-4xl font-bold text-gray-900">{data.program.name}</h1>
             </div>
             <div className="flex items-center gap-3 mt-3">
-              <Badge tone="cyan">Section: {data.program.section}</Badge>
-              <Badge tone="pink">Category: {data.program.category}</Badge>
-              <Badge tone="emerald">Jury: {juryName}</Badge>
+              <Badge className="bg-cyan-100 text-cyan-800 border-cyan-200">Section: {data.program.section}</Badge>
+              <Badge className="bg-pink-100 text-pink-800 border-pink-200">Category: {data.program.category}</Badge>
+              <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Jury: {juryName}</Badge>
             </div>
           </div>
         </div>
 
-        <Card className="border-white/5 bg-slate-900/70">
-          <CardTitle className="mb-6">Podium Winners</CardTitle>
+        <Card className="border-gray-200 bg-white shadow-md">
+          <CardTitle className="mb-6 text-gray-900">Podium Winners</CardTitle>
           <div className="grid gap-6 md:grid-cols-3">
             {data.result.entries
               .sort((a, b) => a.position - b.position)
@@ -123,18 +123,18 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                     : undefined;
 
                 const positionColors = {
-                  1: "from-yellow-500/20 to-yellow-600/20 border-yellow-500/50",
-                  2: "from-gray-400/20 to-gray-500/20 border-gray-400/50",
-                  3: "from-orange-600/20 to-orange-700/20 border-orange-600/50",
+                  1: "bg-yellow-50 border-yellow-300",
+                  2: "bg-gray-50 border-gray-300",
+                  3: "bg-orange-50 border-orange-300",
                 };
 
                 return (
                   <div
                     key={`${data.result.id}-${entry.position}`}
-                    className={`rounded-2xl border-2 bg-gradient-to-br ${positionColors[entry.position as keyof typeof positionColors]} p-6 backdrop-blur-sm`}
+                    className={`rounded-2xl border-2 ${positionColors[entry.position as keyof typeof positionColors]} p-6 shadow-md`}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <p className="text-lg font-bold text-white">
+                      <p className="text-lg font-bold text-gray-900">
                         {entry.position === 1
                           ? "🥇 1st Place"
                           : entry.position === 2
@@ -142,22 +142,22 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                             : "🥉 3rd Place"}
                       </p>
                     </div>
-                    <p className="text-2xl font-bold text-white mb-2">
+                    <p className="text-2xl font-bold text-gray-900 mb-2">
                       {student?.name ?? team?.name ?? "—"}
                     </p>
                     {student && (
-                      <p className="text-sm text-white/70 mb-3">
+                      <p className="text-sm text-gray-600 mb-3">
                         Chest #{student.chest_no}
                       </p>
                     )}
                     {team && (
-                      <p className="text-xs uppercase text-white/60 mb-3">
+                      <p className="text-xs uppercase text-gray-600 mb-3">
                         {team.name}
                       </p>
                     )}
-                    <div className="mt-4 pt-4 border-t border-white/20">
-                      <p className="text-sm text-white/60">Score</p>
-                      <p className="text-2xl font-bold text-emerald-300">
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <p className="text-sm text-gray-600">Score</p>
+                      <p className="text-2xl font-bold text-emerald-600">
                         {formatNumber(entry.score)}
                       </p>
                     </div>
@@ -166,8 +166,8 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
               })}
           </div>
           {(data.result.penalties?.length ?? 0) > 0 && (
-            <div className="mt-8 rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
-              <p className="text-sm font-semibold text-red-200">Minus points applied</p>
+            <div className="mt-8 rounded-2xl border border-red-300 bg-red-50 p-4">
+              <p className="text-sm font-semibold text-red-800">Minus points applied</p>
               <div className="mt-3 space-y-3">
                 {data.result.penalties?.map((penalty, index) => {
                   const student = penalty.student_id
@@ -180,17 +180,17 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                         ? data.teamMap.get(student.team_id)
                         : data.teamMap.get(penalty.team_id ?? "");
                   return (
-                    <div key={`${penalty.team_id ?? penalty.student_id ?? index}`} className="text-sm text-white/80">
+                    <div key={`${penalty.team_id ?? penalty.student_id ?? index}`} className="text-sm text-gray-800">
                       <p className="font-semibold">
                         {student?.name ?? team?.name ?? "Unknown"} · -{penalty.points} pts
                       </p>
                       {student && (
-                        <p className="text-xs text-white/60">
+                        <p className="text-xs text-gray-600">
                           Chest #{student.chest_no} · Team {team?.name ?? "Unknown"}
                         </p>
                       )}
                       {!student && team && (
-                        <p className="text-xs text-white/60">Team ID: {team.id}</p>
+                        <p className="text-xs text-gray-600">Team ID: {team.id}</p>
                       )}
                     </div>
                   );
@@ -198,7 +198,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
               </div>
             </div>
           )}
-          <p className="mt-6 text-xs text-white/50">
+          <p className="mt-6 text-xs text-gray-500">
             Approved on {new Date(data.result.submitted_at).toLocaleString()}
           </p>
         </Card>

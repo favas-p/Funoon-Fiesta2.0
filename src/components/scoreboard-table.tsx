@@ -28,15 +28,15 @@ function TeamCard({ team, totalPoints, medals, isActive, onClick }: TeamCardProp
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={`${
-        isActive ? "ring-2 ring-fuchsia-500" : ""
-      } bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 hover:shadow-xl cursor-pointer transition-all`}
+        isActive ? "ring-2 ring-[#8B4513]" : ""
+      } bg-white rounded-xl shadow-md border border-gray-200 p-4 hover:shadow-lg cursor-pointer transition-all`}
     >
       <div className="flex flex-col space-y-2">
         <div className="flex justify-between items-center">
-          <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">{team.name}</h3>
+          <h3 className="text-sm font-bold text-gray-900">{team.name}</h3>
           <div className="flex items-center space-x-1">
-            <TrendingUp className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-medium text-green-500">{totalPoints}</span>
+            <TrendingUp className="w-4 h-4 text-green-600" />
+            <span className="text-sm font-medium text-green-600">{totalPoints}</span>
           </div>
         </div>
         <div className="flex justify-between items-center">
@@ -95,27 +95,27 @@ function MobileScoreCard({
   return (
     <motion.div
       initial={false}
-      animate={{ backgroundColor: isExpanded ? "rgba(236, 72, 153, 0.1)" : "transparent" }}
-      className="bg-white dark:bg-slate-800 rounded-lg shadow-md mb-4 overflow-hidden"
+      animate={{ backgroundColor: isExpanded ? "rgba(139, 69, 19, 0.1)" : "transparent" }}
+      className="bg-white rounded-lg shadow-md border border-gray-200 mb-4 overflow-hidden"
     >
       <div
         className={`flex justify-between items-center p-4 cursor-pointer ${
           isExpanded
-            ? "bg-gradient-to-r from-fuchsia-600/10 to-rose-600/10"
-            : "hover:bg-gray-50 dark:hover:bg-gray-700"
+            ? "bg-[#8B4513]/10"
+            : "hover:bg-gray-50"
         }`}
         onClick={onToggle}
       >
         <div className="flex items-center space-x-3">
           <Trophy
             className={`w-5 h-5 transition-colors duration-300 ${
-              isExpanded ? "text-fuchsia-500" : "text-gray-400"
+              isExpanded ? "text-[#8B4513]" : "text-gray-400"
             }`}
           />
           <div className="flex flex-col">
             <span
               className={`font-semibold transition-colors duration-300 ${
-                isExpanded ? "text-fuchsia-500" : "text-gray-800 dark:text-gray-200"
+                isExpanded ? "text-[#8B4513]" : "text-gray-900"
               }`}
             >
               {program.name.toUpperCase()}
@@ -130,7 +130,7 @@ function MobileScoreCard({
           opacity: isExpanded ? 1 : 0,
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="overflow-hidden bg-gray-50 dark:bg-slate-900"
+        className="overflow-hidden bg-gray-50"
       >
         {teamNames.map((teamName, index) => {
           const team = teamNameMap.get(teamName);
@@ -152,10 +152,10 @@ function MobileScoreCard({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               key={teamName}
-              className="px-4 py-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-3 border-t border-gray-200 flex justify-between items-center hover:bg-gray-100"
             >
               <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-700 dark:text-gray-300">{teamName}</span>
+                <span className="font-medium text-gray-900">{teamName}</span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="flex flex-col items-end gap-1">
@@ -169,7 +169,7 @@ function MobileScoreCard({
                     const position = entry.position;
                     return (
                       <div key={idx} className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="font-semibold text-gray-900">
                           {entry.score}
                         </span>
                         <span className="text-lg transform hover:scale-110 transition-transform">
@@ -301,7 +301,7 @@ export function ScoreboardTable({
           >
             <motion.button
               onClick={() => setExpandedSection(expandedSection === title ? null : title)}
-              className="w-full flex justify-between items-center p-4 bg-gradient-to-r from-fuchsia-600 to-rose-600 rounded-lg text-white font-semibold"
+              className="w-full flex justify-between items-center p-4 bg-[#8B4513] rounded-lg text-white font-semibold hover:bg-[#6B3410] transition-colors"
               whileHover={{ scale: 1.02 }}
             >
               <span>{title}</span>
@@ -347,10 +347,10 @@ export function ScoreboardTable({
     const allPrograms = [...singlePrograms, ...groupPrograms, ...generalPrograms];
 
     return (
-      <div className="overflow-x-auto rounded-lg bg-white dark:bg-slate-900 border border-white/10 dark:border-slate-700 shadow-lg">
+      <div className="overflow-x-auto rounded-lg bg-white border border-gray-200 shadow-lg">
         <table className="table-auto w-full border-collapse text-sm sm:text-base">
           <thead>
-            <tr className="bg-gradient-to-r from-fuchsia-600 to-rose-600 text-white">
+            <tr className="bg-[#8B4513] text-white">
               <th className="px-4 py-4 text-left">PROGRAM NAME</th>
               {teamNames.map((team) => (
                 <th key={team} className="px-4 py-4 text-center">
@@ -359,15 +359,15 @@ export function ScoreboardTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-gray-200">
             {allPrograms.map((program) => {
               const programResults = results.filter((r) => r.program_id === program.id);
               return (
                 <tr
                   key={program.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                  className="hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <td className="px-4 py-3 font-semibold text-blue-600 dark:text-blue-300">
+                  <td className="px-4 py-3 font-semibold text-[#8B4513]">
                     <div className="flex items-center space-x-2">
                       <Trophy className="w-4 h-4" />
                       <span>{program.name.toUpperCase()}</span>
@@ -392,7 +392,7 @@ export function ScoreboardTable({
                         {entry ? (
                           <div className="flex flex-col items-center gap-1">
                             <div className="flex items-center justify-center space-x-2">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                              <span className="font-medium text-gray-900">
                                 {entry.score}
                               </span>
                               <span className="text-lg transform hover:scale-110 transition-transform">
@@ -411,10 +411,10 @@ export function ScoreboardTable({
                 </tr>
               );
             })}
-            <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 font-bold">
-              <td className="px-4 py-4">TOTAL</td>
+            <tr className="bg-gray-100 font-bold">
+              <td className="px-4 py-4 text-gray-900">TOTAL</td>
               {teams.map((team) => (
-                <td key={team.id} className="px-4 py-4 text-center text-lg text-blue-600 dark:text-blue-300">
+                <td key={team.id} className="px-4 py-4 text-center text-lg text-[#8B4513]">
                   {getTotalPointsForTeam(team.id)}
                 </td>
               ))}
@@ -429,8 +429,8 @@ export function ScoreboardTable({
     <div className="text-center py-8">
       <div className="flex flex-col items-center space-y-4">
         <Trophy className="w-12 h-12 text-gray-400" />
-        <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">No Data Available</h3>
-        <p className="text-gray-500 dark:text-gray-400">No results have been approved yet.</p>
+        <h3 className="text-xl font-semibold text-gray-700">No Data Available</h3>
+        <p className="text-gray-600">No results have been approved yet.</p>
       </div>
     </div>
   );
@@ -440,11 +440,11 @@ export function ScoreboardTable({
   return (
     <div className="container mx-auto px-4 py-12 md:px-12">
       <div className="flex flex-col items-center mb-8 space-y-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-200 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold text-[#8B4513] text-center">
           <span className="flex items-center justify-center space-x-3">
-            <Medal className="w-8 h-8 text-fuchsia-500" />
+            <Medal className="w-8 h-8 text-[#8B4513]" />
             <span>SCOREBOARD</span>
-            <Medal className="w-8 h-8 text-fuchsia-500" />
+            <Medal className="w-8 h-8 text-[#8B4513]" />
           </span>
         </h1>
       </div>

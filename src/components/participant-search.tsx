@@ -71,23 +71,23 @@ export function ParticipantSearch() {
 
   return (
     <div className="space-y-4">
-      <Card className="p-6">
+      <Card className="p-6 bg-white border-gray-200 shadow-md">
         <div className="space-y-4">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="text"
                 placeholder="Search by chest number or name..."
                 value={query}
                 onChange={(e) => handleInputChange(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-white border-gray-300 text-gray-900 focus:border-[#8B4513] focus:ring-[#8B4513]"
               />
             </div>
             <Button
               variant="outline"
               onClick={() => setShowScanner(true)}
-              className="gap-2"
+              className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               <QrCode className="h-4 w-4" />
               Scan QR
@@ -96,30 +96,30 @@ export function ParticipantSearch() {
 
           {isSearching && (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
             </div>
           )}
 
           {!isSearching && results.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-600">
                 {results.length} result{results.length !== 1 ? "s" : ""} found
               </p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {results.map((result) => (
                   <Card
                     key={result.id}
-                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    className="p-4 cursor-pointer hover:bg-gray-50 transition-colors bg-white border-gray-200"
                     onClick={() => handleSelectParticipant(result.chest_no)}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{result.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-gray-900">{result.name}</p>
+                        <p className="text-sm text-gray-600">
                           Chest: {result.chest_no}
                         </p>
                       </div>
-                      <Badge tone="cyan">View Profile</Badge>
+                      <Badge className="bg-cyan-100 text-cyan-800 border-cyan-200">View Profile</Badge>
                     </div>
                   </Card>
                 ))}
@@ -128,7 +128,7 @@ export function ParticipantSearch() {
           )}
 
           {!isSearching && query.trim().length >= 2 && results.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-sm text-gray-600 text-center py-4">
               No participants found
             </p>
           )}

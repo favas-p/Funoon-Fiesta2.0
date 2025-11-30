@@ -57,3 +57,8 @@ export function JuryProgramsRealtime({ assignments: initialAssignments }: JuryPr
 
 
 
+
+
+
+
+

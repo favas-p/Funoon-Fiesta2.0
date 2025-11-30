@@ -21,7 +21,7 @@ export default async function ParticipantPage({ params }: ParticipantPageProps) 
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6">
         <Link href="/participant">
-          <Button variant="ghost" className="gap-2">
+          <Button variant="ghost" className="gap-2 text-gray-700 hover:bg-gray-100">
             <ArrowLeft className="h-4 w-4" />
             Back to Search
           </Button>

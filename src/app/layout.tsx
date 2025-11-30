@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/toast-provider";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { RealtimeProvider } from "@/components/realtime-provider";
+import { PublicPageWrapper } from "@/components/public-page-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -70,18 +71,18 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#3b0764,_#020617_55%)]">
         <SpeedInsights/>
         <RealtimeProvider>
           <OfflineIndicator />
           <ToastProvider>
+            <PublicPageWrapper>
             {children}
+            </PublicPageWrapper>
           </ToastProvider>
           <PWAInstallPrompt />
         </RealtimeProvider>
-        </div>
       </body>
     </html>
   );
