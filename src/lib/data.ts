@@ -346,21 +346,21 @@ export async function deleteJuryById(id: string) {
 export async function getOrCreateAdminJury(): Promise<Jury> {
   await connectDB();
   const adminJuryId = "jury-admin";
-  let adminJury = await JuryModel.findOne({ id: adminJuryId }).lean();
-  
+
+  let adminJury = await JuryModel.findOne({ id: adminJuryId }).lean<Jury>().exec();
+
   if (!adminJury) {
-    // Create admin jury if it doesn't exist
-    const newAdminJury: Jury = {
+    await JuryModel.create({
       id: adminJuryId,
       name: "Admin",
       password: "admin@jury",
       avatar: "/img/jury.webp",
-    };
-    await JuryModel.create(newAdminJury);
-    adminJury = newAdminJury;
+    });
+
+    adminJury = await JuryModel.findOne({ id: adminJuryId }).lean<Jury>().exec();
   }
-  
-  return adminJury as Jury;
+
+  return adminJury!; // safe because we just created it if missing
 }
 
 export async function assignProgramToJury(programId: string, juryId: string) {
