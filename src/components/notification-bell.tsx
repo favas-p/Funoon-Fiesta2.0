@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Bell, X, ExternalLink } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Bell, X, ExternalLink, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { getPusherClient, CHANNELS } from "@/lib/pusher-client";
 import type { Notification } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface NotificationBellProps {
   initialNotifications?: Notification[];
@@ -20,16 +21,17 @@ export function NotificationBell({
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   // Listen for new notifications
   useEffect(() => {
     const pusher = getPusherClient();
     const channel = pusher.subscribe(CHANNELS.RESULTS);
-    
+
     channel.bind("notification-created", (data: { notification: Notification }) => {
       setNotifications((prev) => [data.notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
-      
+
       // Show browser notification if permission granted
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification(data.notification.title, {
@@ -86,26 +88,39 @@ export function NotificationBell({
     }
   }, []);
 
-  const unreadNotifications = notifications.filter((n) => !n.read);
-
   return (
     <div className="relative">
-      <button
+      <motion.button
+        ref={bellRef}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg bg-white/90 backdrop-blur-sm shadow-md hover:bg-white transition-colors border border-gray-200"
+        className={cn(
+          "relative p-3 rounded-full transition-all duration-300",
+          "bg-white/80 backdrop-blur-md shadow-lg border border-white/20",
+          "hover:bg-white hover:shadow-xl hover:border-purple-200",
+          isOpen && "bg-white ring-2 ring-purple-500/20"
+        )}
         aria-label="Notifications"
       >
-        <Bell className="w-6 h-6 text-gray-700" />
-        {unreadCount > 0 && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
-          >
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </motion.span>
-        )}
-      </button>
+        <Bell className={cn(
+          "w-5 h-5 transition-colors",
+          unreadCount > 0 ? "text-purple-600" : "text-gray-600"
+        )} />
+
+        <AnimatePresence>
+          {unreadCount > 0 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1 shadow-sm border-2 border-white"
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       <AnimatePresence>
         {isOpen && (
@@ -115,71 +130,94 @@ export function NotificationBell({
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              initial={{ opacity: 0, y: 10, scale: 0.95, transformOrigin: "top right" }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="absolute right-0 mt-2 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-[500px] overflow-hidden flex flex-col"
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute right-0 mt-3 w-80 md:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 z-50 max-h-[600px] overflow-hidden flex flex-col ring-1 ring-black/5"
             >
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  Notifications
-                </h3>
+              <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white/50">
                 <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-gray-800 text-lg">
+                    Notifications
+                  </h3>
+                  {unreadCount > 0 && (
+                    <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
                   {unreadCount > 0 && (
                     <button
                       onClick={handleMarkAllAsRead}
-                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                      title="Mark all as read"
                     >
-                      Mark all read
+                      <CheckCheck className="w-4 h-4" />
                     </button>
                   )}
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="overflow-y-auto flex-1">
+              <div className="overflow-y-auto flex-1 custom-scrollbar">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                    <Bell className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>No notifications yet</p>
+                  <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                      <Bell className="w-8 h-8 text-gray-300" />
+                    </div>
+                    <p className="text-gray-900 font-medium">No notifications yet</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      We'll let you know when results are published!
+                    </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <div className="divide-y divide-gray-50">
                     {notifications.map((notification) => (
                       <motion.div
                         key={notification.id}
+                        layout
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          !notification.read ? "bg-blue-50 dark:bg-blue-900/20" : ""
-                        }`}
+                        className={cn(
+                          "p-4 cursor-pointer transition-all hover:bg-gray-50 group relative",
+                          !notification.read && "bg-purple-50/40 hover:bg-purple-50/60"
+                        )}
                       >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-blue-500"
-                                : "bg-transparent"
-                            }`}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                              {notification.title}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <div className="flex gap-3">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full mt-2 flex-shrink-0 transition-colors",
+                            !notification.read ? "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.4)]" : "bg-gray-200"
+                          )} />
+
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex justify-between items-start gap-2">
+                              <p className={cn(
+                                "text-sm font-semibold leading-tight",
+                                !notification.read ? "text-gray-900" : "text-gray-700"
+                              )}>
+                                {notification.title}
+                              </p>
+                              <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                              {new Date(notification.createdAt).toLocaleString()}
-                            </p>
+
+                            <div className="flex items-center gap-1 text-xs text-purple-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity pt-1">
+                              <span>View Results</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </div>
                           </div>
-                          <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                         </div>
                       </motion.div>
                     ))}
@@ -193,4 +231,3 @@ export function NotificationBell({
     </div>
   );
 }
-
