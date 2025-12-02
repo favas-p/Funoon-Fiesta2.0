@@ -2,11 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { 
-  Home, 
-  Trophy, 
-  BarChart3, 
-  Search
+import {
+  Home,
+  Trophy,
+  BarChart3,
+  Search,
+  Bot
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ const navItems = [
   { href: "/results", label: "Results", icon: Trophy },
   { href: "/scoreboard", label: "Scoreboard", icon: BarChart3 },
   { href: "/participant", label: "Find Participant", icon: Search },
+  { href: "/chatbot", label: "AI Assistant", icon: Bot },
 ];
 
 export function VerticalNavSidebar() {
